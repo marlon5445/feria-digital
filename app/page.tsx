@@ -1,5 +1,4 @@
-import Link from 'next/link';
-import { Zap, MessageCircle, Smartphone, ArrowRight, Gift } from 'lucide-react';
+import { Zap, MessageCircle, Smartphone, Gift } from 'lucide-react';
 
 export default function HomePage() {
   return (
@@ -12,12 +11,6 @@ export default function HomePage() {
             Feria<span className="text-red-600">Digital</span>
           </span>
         </div>
-        <Link
-          href="/login"
-          className="inline-flex items-center px-5 py-2.5 rounded-full text-sm font-semibold text-white bg-red-600 hover:bg-red-700 shadow-md transition"
-        >
-          Acceso Emprendedores
-        </Link>
       </header>
 
       {/* Hero Section */}
@@ -32,14 +25,7 @@ export default function HomePage() {
         <p className="mt-6 text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto">
           La solución más rápida y elegante para emprendedores peruanos. Comparte tu link único, recibe pedidos detallados con comprobante de Yape directo a tu WhatsApp y multiplica tus ventas navideñas.
         </p>
-        <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
-          <Link
-            href="/login"
-            className="inline-flex items-center justify-center px-8 py-3.5 text-base font-bold rounded-xl text-white bg-red-600 hover:bg-red-700 shadow-lg shadow-red-200 transition"
-          >
-            Empezar Gratis Ahora
-            <ArrowRight className="ml-2 w-5 h-5" />
-          </Link>
+        <div className="mt-8 flex justify-center">
           <a
             href="#beneficios"
             className="inline-flex items-center justify-center px-8 py-3.5 text-base font-semibold rounded-xl text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 shadow-sm transition"
