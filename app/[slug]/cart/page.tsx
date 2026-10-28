@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import CartClient from './CartClient';
 
+export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 
 interface PageProps {
