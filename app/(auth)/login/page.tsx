@@ -3,51 +3,33 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { Gift, Lock, Mail, ArrowRight, Loader2 } from 'lucide-react';
+import { Gift, Lock, Mail, ArrowRight, Loader2, ShieldCheck } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
   const supabase = createClient();
 
-  const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [infoMsg, setInfoMsg] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setErrorMsg(null);
-    setInfoMsg(null);
 
     try {
-      if (isSignUp) {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-        });
-        if (error) throw error;
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) throw error;
 
-        if (data.session) {
-          router.push('/admin');
-          router.refresh();
-        } else {
-          setInfoMsg('Cuenta creada exitosamente. Por favor verifica tu correo para confirmar o inicia sesión.');
-        }
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (error) throw error;
-
-        router.push('/admin');
-        router.refresh();
-      }
+      router.push('/admin');
+      router.refresh();
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Ocurrió un error al procesar la solicitud.';
+      const errorMessage = err instanceof Error ? err.message : 'Credenciales inválidas o error de conexión.';
       setErrorMsg(errorMessage);
     } finally {
       setLoading(false);
@@ -61,10 +43,10 @@ export default function LoginPage() {
           <Gift className="w-6 h-6" />
         </div>
         <h2 className="text-3xl font-extrabold text-gray-900">
-          {isSignUp ? 'Crear tu Cuenta de Emprendedor' : 'Acceso a tu Panel de Control'}
+          Acceso a tu Panel
         </h2>
         <p className="mt-2 text-sm text-gray-600">
-          Feria Digital - Administra tus productos y catálogo
+          Feria Digital - Administra tus productos o gestiona la plataforma
         </p>
       </div>
 
@@ -74,11 +56,6 @@ export default function LoginPage() {
             {errorMsg && (
               <div className="p-3 rounded-lg bg-red-50 text-red-700 text-sm font-medium border border-red-100">
                 {errorMsg}
-              </div>
-            )}
-            {infoMsg && (
-              <div className="p-3 rounded-lg bg-blue-50 text-blue-700 text-sm font-medium border border-blue-100">
-                {infoMsg}
               </div>
             )}
 
@@ -125,27 +102,21 @@ export default function LoginPage() {
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
                 <>
-                  {isSignUp ? 'Registrarse y Crear Tienda' : 'Iniciar Sesión'}
+                  Iniciar Sesión
                   <ArrowRight className="ml-2 w-4 h-4" />
                 </>
               )}
             </button>
           </form>
 
-          <div className="mt-6 text-center">
-            <button
-              type="button"
-              onClick={() => {
-                setIsSignUp(!isSignUp);
-                setErrorMsg(null);
-                setInfoMsg(null);
-              }}
-              className="text-sm font-medium text-red-600 hover:text-red-500"
-            >
-              {isSignUp
-                ? '¿Ya tienes una cuenta? Inicia sesión'
-                : '¿No tienes cuenta aún? Regístrate aquí'}
-            </button>
+          <div className="mt-6 pt-6 border-t border-gray-100 text-center">
+            <div className="flex items-center justify-center space-x-1.5 text-xs text-gray-500">
+              <ShieldCheck className="w-4 h-4 text-green-600" />
+              <span>Acceso exclusivo para dueños autorizados y administración.</span>
+            </div>
+            <p className="text-xs text-gray-400 mt-1">
+              ¿Quieres publicar tu catálogo? Contacta al administrador para habilitar tu cuenta.
+            </p>
           </div>
         </div>
       </div>
