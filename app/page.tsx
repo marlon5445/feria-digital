@@ -1,69 +1,93 @@
-import Image from "next/image";
+import Link from 'next/link';
+import { Zap, MessageCircle, Smartphone, ArrowRight, Gift } from 'lucide-react';
 
-export default function Home() {
+export default function HomePage() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen bg-gradient-to-b from-red-50 via-white to-red-50">
+      {/* Header */}
+      <header className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <Gift className="w-8 h-8 text-red-600" />
+          <span className="text-2xl font-black tracking-tight text-gray-900">
+            Feria<span className="text-red-600">Digital</span>
+          </span>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+        <Link
+          href="/login"
+          className="inline-flex items-center px-5 py-2.5 rounded-full text-sm font-semibold text-white bg-red-600 hover:bg-red-700 shadow-md transition"
+        >
+          Acceso Emprendedores
+        </Link>
+      </header>
+
+      {/* Hero Section */}
+      <section className="max-w-5xl mx-auto px-4 pt-12 pb-20 text-center">
+        <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold bg-red-100 text-red-800 mb-6">
+          🎄 Especial Campaña Navideña
+        </span>
+        <h1 className="text-4xl sm:text-6xl font-extrabold text-gray-900 tracking-tight leading-tight">
+          Crea tu Catálogo Digital y Vende por{' '}
+          <span className="text-red-600">WhatsApp & Yape</span> en minutos
+        </h1>
+        <p className="mt-6 text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto">
+          La solución más rápida y elegante para emprendedores peruanos. Comparte tu link único, recibe pedidos detallados con comprobante de Yape directo a tu WhatsApp y multiplica tus ventas navideñas.
+        </p>
+        <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+          <Link
+            href="/login"
+            className="inline-flex items-center justify-center px-8 py-3.5 text-base font-bold rounded-xl text-white bg-red-600 hover:bg-red-700 shadow-lg shadow-red-200 transition"
           >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
+            Empezar Gratis Ahora
+            <ArrowRight className="ml-2 w-5 h-5" />
+          </Link>
           <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="#beneficios"
+            className="inline-flex items-center justify-center px-8 py-3.5 text-base font-semibold rounded-xl text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 shadow-sm transition"
           >
-            Documentation
+            Ver Beneficios
           </a>
         </div>
-      </main>
+      </section>
+
+      {/* Features Grid */}
+      <section id="beneficios" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="p-8 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition">
+            <div className="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center text-red-600 mb-6">
+              <Smartphone className="w-6 h-6" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Tu Enlace Personalizado</h3>
+            <p className="text-gray-600 text-sm">
+              Tendrás tu propia URL: <code className="bg-gray-100 px-1 py-0.5 rounded text-red-600 font-mono">feriadigital.pe/[tu-tienda]</code> lista para compartir en Instagram, TikTok y estados.
+            </p>
+          </div>
+
+          <div className="p-8 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition">
+            <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center text-purple-600 mb-6">
+              <Zap className="w-6 h-6" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Integración con Yape</h3>
+            <p className="text-gray-600 text-sm">
+              Tus clientes verán tu número de Yape directamente en el checkout y podrán ingresar su número de operación para validar el pago.
+            </p>
+          </div>
+
+          <div className="p-8 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition">
+            <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center text-green-600 mb-6">
+              <MessageCircle className="w-6 h-6" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Pedidos al WhatsApp</h3>
+            <p className="text-gray-600 text-sm">
+              Recibe el pedido listo, detallado con productos, cantidades, dirección de envío y código de pago en un solo mensaje de WhatsApp.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-gray-200 bg-white py-8 text-center text-sm text-gray-500">
+        <p>© 2025 Feria Digital. Impulsando el comercio navideño independiente.</p>
+      </footer>
     </div>
   );
 }
