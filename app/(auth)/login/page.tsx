@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { Gift, Lock, Mail, ArrowRight, Loader2, ShieldCheck } from 'lucide-react';
+import { Gift, Lock, Mail, ArrowRight, Loader2, ShieldCheck, AlertCircle } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -20,17 +20,51 @@ export default function LoginPage() {
     setErrorMsg(null);
 
     try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+      if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('placeholder')) {
+        console.warn('Supabase env vars missing or invalid:', { supabaseUrl: !!supabaseUrl, supabaseAnonKey: !!supabaseAnonKey });
+      }
+
       const { error } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim(),
         password,
       });
-      if (error) throw error;
+
+      if (error) {
+        console.error('Supabase Auth error details:', error);
+
+        if (error.message?.toLowerCase().includes('failed to fetch') || error.name === 'AuthRetryableFetchError') {
+          setErrorMsg('No se pudo conectar con el servidor de autenticación. Verifica las variables de entorno (NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY) o la configuración de CORS.');
+          return;
+        }
+
+        if (error.message?.includes('Invalid login credentials')) {
+          setErrorMsg('Correo o contraseña incorrectos. Verifica tus credenciales e intenta nuevamente.');
+          return;
+        }
+
+        if (error.message?.includes('Email not confirmed')) {
+          setErrorMsg('El correo electrónico no ha sido confirmado aún en Supabase.');
+          return;
+        }
+
+        setErrorMsg(error.message || 'Error al iniciar sesión. Inténtalo de nuevo.');
+        return;
+      }
 
       router.push('/admin');
       router.refresh();
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Credenciales inválidas o error de conexión.';
-      setErrorMsg(errorMessage);
+      console.error('Login unexpected error:', err);
+      const rawMsg = err instanceof Error ? err.message : String(err);
+
+      if (rawMsg.toLowerCase().includes('failed to fetch') || rawMsg.toLowerCase().includes('networkerror')) {
+        setErrorMsg('No se pudo conectar con el servidor de autenticación. Verifica las variables de entorno o la configuración de CORS.');
+      } else {
+        setErrorMsg(rawMsg || 'No se pudo conectar con el servidor de autenticación. Verifica las variables de entorno o la configuración de CORS.');
+      }
     } finally {
       setLoading(false);
     }
@@ -54,15 +88,16 @@ export default function LoginPage() {
         <div className="bg-white py-8 px-6 shadow-xl rounded-2xl sm:px-10 border border-gray-100">
           <form className="space-y-6" onSubmit={handleSubmit}>
             {errorMsg && (
-              <div className="p-3 rounded-lg bg-red-50 text-red-700 text-sm font-medium border border-red-100">
-                {errorMsg}
+              <div className="p-3.5 rounded-lg bg-red-50 text-red-700 text-sm font-medium border border-red-200 flex items-start gap-2.5">
+                <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                <span className="leading-snug">{errorMsg}</span>
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Correo Electrónico</label>
+              <label className="block text-sm font-semibold text-gray-800">Correo Electrónico</label>
               <div className="mt-1 relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
                   <Mail className="h-5 w-5" />
                 </div>
                 <input
@@ -70,16 +105,16 @@ export default function LoginPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500 text-sm"
+                  className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 font-medium placeholder:text-gray-400 focus:bg-white focus:text-gray-900 focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm shadow-sm"
                   placeholder="tu@email.com"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Contraseña</label>
+              <label className="block text-sm font-semibold text-gray-800">Contraseña</label>
               <div className="mt-1 relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
                   <Lock className="h-5 w-5" />
                 </div>
                 <input
@@ -87,7 +122,7 @@ export default function LoginPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500 text-sm"
+                  className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 font-medium placeholder:text-gray-400 focus:bg-white focus:text-gray-900 focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm shadow-sm"
                   placeholder="••••••••"
                 />
               </div>
