@@ -722,60 +722,101 @@ export default function AdminPage() {
               </div>
             </div>
 
-            {allStores.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
-                Aún no hay negocios creados. Utiliza el formulario superior para registrar el primero.
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {allStores.map((item) => (
-                  <div
-                    key={item.id}
-                    className="border border-gray-200 rounded-2xl p-5 bg-white shadow-sm hover:shadow-md transition flex flex-col justify-between"
-                  >
-                    <div>
-                      <div className="flex items-center space-x-3 mb-3">
-                        {item.logo_url ? (
-                          <img
-                            src={item.logo_url}
-                            alt={item.name}
-                            className="w-12 h-12 rounded-full object-cover border border-gray-200"
-                          />
-                        ) : (
-                          <div
-                            className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold"
-                            style={{ backgroundColor: item.theme_color || '#dc2626' }}
-                          >
-                            {item.name.charAt(0).toUpperCase()}
+            {(() => {
+              const q = searchTerm.trim().toLowerCase();
+              const filtered = q === ''
+                ? allStores
+                : allStores.filter((s) =>
+                    (s.name || '').toLowerCase().includes(q) ||
+                    (s.slug || '').toLowerCase().includes(q) ||
+                    (s.whatsapp_number || '').includes(q) ||
+                    (s.yape_number || '').includes(q)
+                  );
+
+              if (allStores.length === 0) {
+                return (
+                  <div className="text-center py-12 text-gray-500">
+                    Aún no hay negocios creados. Utiliza el formulario superior para registrar el primero.
+                  </div>
+                );
+              }
+
+              if (filtered.length === 0) {
+                return (
+                  <div className="text-center py-12 text-gray-400">
+                    <Search className="w-8 h-8 mx-auto mb-3 opacity-40" />
+                    <p className="font-medium text-gray-600">No se encontraron negocios que coincidan con la búsqueda.</p>
+                    <button onClick={() => setSearchTerm('')} className="mt-3 text-sm text-red-600 hover:underline font-semibold">
+                      Limpiar filtro
+                    </button>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {filtered.map((item) => (
+                    <div
+                      key={item.id}
+                      className="border border-gray-200 rounded-2xl p-5 bg-white shadow-sm hover:shadow-md transition flex flex-col justify-between"
+                    >
+                      <div>
+                        <div className="flex items-center gap-3 mb-3">
+                          {item.logo_url ? (
+                            <img
+                              src={item.logo_url}
+                              alt={item.name}
+                              className="w-12 h-12 rounded-xl object-contain border border-gray-200 p-1 shrink-0 bg-white shadow-sm"
+                            />
+                          ) : (
+                            <div
+                              className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-black text-lg shrink-0 shadow-sm"
+                              style={{ backgroundColor: item.theme_color || '#dc2626' }}
+                            >
+                              {item.name.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <h3 className="font-bold text-gray-900 text-sm leading-tight line-clamp-1">{item.name}</h3>
+                            <span className="text-xs font-mono text-red-600 font-semibold">/{item.slug}</span>
                           </div>
-                        )}
-                        <div>
-                          <h3 className="font-bold text-gray-900 text-base leading-tight">{item.name}</h3>
-                          <span className="text-xs font-mono text-red-600 font-semibold">/{item.slug}</span>
+                        </div>
+
+                        <div className="text-xs text-gray-600 space-y-1 pt-3 border-t border-gray-100">
+                          <div><span className="font-semibold text-gray-500">WhatsApp:</span> {item.whatsapp_number}</div>
+                          <div><span className="font-semibold text-gray-500">Yape / Plin:</span> {item.yape_number}</div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-semibold text-gray-500">Color:</span>
+                            <span className="inline-block w-3.5 h-3.5 rounded-full border border-gray-300" style={{ backgroundColor: item.theme_color }} />
+                            <span className="font-mono text-[11px] text-gray-500">{item.theme_color}</span>
+                          </div>
                         </div>
                       </div>
 
-                      <div className="text-xs text-gray-600 space-y-1 mt-3 pt-3 border-t border-gray-100">
-                        <div><strong>WhatsApp:</strong> {item.whatsapp_number}</div>
-                        <div><strong>Yape / Plin:</strong> {item.yape_number}</div>
+                      <div className="mt-4 pt-3 border-t border-gray-100 flex items-center gap-2">
+                        <a
+                          href={`/${item.slug}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex-1 inline-flex items-center justify-center gap-1.5 text-xs font-bold text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-xl transition"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          Ver Catálogo
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEdit(item)}
+                          className="flex-1 inline-flex items-center justify-center gap-1.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 px-3 py-2 rounded-xl transition shadow-sm"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                          Editar
+                        </button>
                       </div>
                     </div>
-
-                    <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
-                      <a
-                        href={`/${item.slug}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center text-xs font-bold text-red-600 hover:text-red-700"
-                      >
-                        Ver Catálogo
-                        <ExternalLink className="w-3.5 h-3.5 ml-1" />
-                      </a>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              );
+            })()}
           </div>
         </main>
 
