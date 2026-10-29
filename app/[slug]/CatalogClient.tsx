@@ -114,64 +114,84 @@ export default function CatalogClient({
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 pb-36">
       {/* ============================================================== */}
-      {/* 1. HERO HEADER & IDENTIDAD DE MARCA */}
+      {/* 1. TOPBAR NAVBAR — IDENTIDAD DE MARCA + ACCIONES */}
       {/* ============================================================== */}
-      <div
-        className="w-full relative overflow-hidden py-8 sm:py-10"
+      <header
+        className="w-full relative overflow-hidden py-3.5 px-4 md:px-8"
         style={{
           background: `linear-gradient(135deg, ${themeColor} 0%, #0f172a 100%)`,
         }}
       >
         {/* Acentos de luz sutiles */}
-        <div className="absolute -top-16 -left-16 w-64 h-64 rounded-full bg-white/10 blur-2xl pointer-events-none" />
-        <div className="absolute -bottom-16 -right-16 w-64 h-64 rounded-full bg-white/10 blur-2xl pointer-events-none" />
+        <div className="absolute -top-10 -left-10 w-48 h-48 rounded-full bg-white/10 blur-2xl pointer-events-none" />
+        <div className="absolute -bottom-10 -right-10 w-48 h-48 rounded-full bg-white/10 blur-2xl pointer-events-none" />
 
-        {/* Badge de Verificación */}
-        <div className="absolute top-4 right-4 sm:right-6">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/15 backdrop-blur-md text-white border border-white/20 shadow-sm">
-            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-            <span>Tienda Oficial</span>
-          </span>
-        </div>
+        <div className="flex items-center justify-between max-w-7xl mx-auto gap-4 relative z-10">
 
-        {/* Contenido unificado sobre el banner */}
-        <div className="max-w-4xl mx-auto px-4 relative z-10 flex flex-col items-center text-center gap-3">
-          {/* Logo de la Tienda — tarjeta con esquinas redondeadas, sin recorte circular */}
-          <div className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-2xl shadow-lg p-2.5 flex items-center justify-center border border-slate-100 shrink-0 transition-transform hover:scale-105 duration-200">
-            {store.logo_url ? (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img
-                src={store.logo_url}
-                alt={store.name}
-                className="w-full h-full object-contain"
-              />
-            ) : (
-              <StoreIcon className="w-10 h-10 text-slate-400" />
-            )}
+          {/* ── LADO IZQUIERDO: Logo + Nombre ── */}
+          <div className="flex items-center gap-3 md:gap-4 min-w-0">
+            {/* Logo — tarjeta pequeña sin recorte circular */}
+            <div className="w-12 h-12 md:w-14 md:h-14 bg-white rounded-xl shadow-sm p-1.5 flex items-center justify-center shrink-0 border border-white/20">
+              {store.logo_url ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={store.logo_url}
+                  alt={store.name}
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                <StoreIcon className="w-6 h-6 text-slate-400" />
+              )}
+            </div>
+
+            {/* Nombre de la tienda + badge */}
+            <div className="min-w-0">
+              <h1 className="text-lg md:text-2xl font-black text-white tracking-tight drop-shadow-sm line-clamp-1">
+                {store.name}
+              </h1>
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-white/70">
+                <Sparkles className="w-3 h-3 text-amber-300" />
+                Tienda Oficial
+              </span>
+            </div>
           </div>
 
-          {/* Nombre de la Tienda */}
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight drop-shadow-sm">
-            {store.name}
-          </h1>
+          {/* ── LADO DERECHO: WhatsApp + Carrito ── */}
+          <div className="flex items-center gap-2 md:gap-3 shrink-0">
 
-          {/* Botón Directo a WhatsApp */}
-          <a
-            href={whatsappUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-all shadow-sm hover:shadow"
-          >
-            <MessageCircle className="w-4 h-4 text-emerald-600" />
-            <span>Contactar por WhatsApp</span>
-          </a>
+            {/* Botón WhatsApp */}
+            <a
+              href={whatsappUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-2 md:px-4 md:py-2.5 rounded-xl text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 transition-all shadow-sm hover:shadow"
+              aria-label="Contactar por WhatsApp"
+            >
+              <MessageCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span className="hidden sm:inline">WhatsApp</span>
+            </a>
+
+            {/* Botón Carrito con contador */}
+            <Link
+              href={`/${store.slug}/cart`}
+              className="relative bg-white/10 hover:bg-white/20 text-white p-2.5 rounded-xl transition-all border border-white/15 cursor-pointer"
+              aria-label={`Carrito: ${totalItems} ${totalItems === 1 ? 'producto' : 'productos'}`}
+            >
+              <ShoppingCart className="w-5 h-5" />
+              {totalItems > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center shadow-md animate-pulse">
+                  {totalItems > 99 ? '99+' : totalItems}
+                </span>
+              )}
+            </Link>
+          </div>
         </div>
-      </div>
+      </header>
 
       {/* ============================================================== */}
       {/* 2. BARRA DE BÚSQUEDA Y FILTROS DE CATEGORÍA */}
       {/* ============================================================== */}
-      <section className="max-w-7xl mx-auto px-4 mt-8 sm:mt-10">
+      <section className="max-w-7xl mx-auto px-4 mt-6">
         <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 space-y-4">
           {/* Input de Búsqueda */}
           <div className="relative">
