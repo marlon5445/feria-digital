@@ -229,9 +229,10 @@ export default function CartClient({ store }: { store: Store }) {
     }
 
     message += `\n🛍️ *DETALLE DEL PEDIDO:*\n`;
-    items.forEach((item, index) => {
+    items.forEach((item) => {
       const subtotal = item.price * item.quantity;
-      message += `${index + 1}. ${item.name} x${item.quantity} — S/ ${subtotal.toFixed(2)}\n`;
+      const categoryTag = item.category ? `[${item.category}] ` : "";
+      message += `• ${categoryTag}${item.name} x${item.quantity} - S/ ${subtotal.toFixed(2)}\n`;
     });
 
     message += `\n💰 *TOTAL A PAGAR: S/ ${totalPrice.toFixed(2)}*\n`;

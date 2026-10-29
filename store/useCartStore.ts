@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+﻿import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
 export interface CartItem {
@@ -6,6 +6,7 @@ export interface CartItem {
   name: string;
   price: number;
   image_url: string | null;
+  category?: string;
   quantity: number;
 }
 

@@ -1,4 +1,4 @@
--- ==============================================================================
+﻿-- ==============================================================================
 -- FERIA DIGITAL - ESQUEMA GLOBAL CONSOLIDADO E IDEMPOTENTE (schema.sql)
 -- ==============================================================================
 -- Este archivo es la fuente única de la verdad para la base de datos de Supabase.
@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS public.products (
     description TEXT,
     price NUMERIC(10, 2) NOT NULL CHECK (price >= 0),
     image_url TEXT,
+    images TEXT[] DEFAULT '{}',
     category TEXT NOT NULL DEFAULT 'General',
     is_active BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
@@ -343,3 +344,7 @@ SET email_confirmed_at = COALESCE(email_confirmed_at, now())
 WHERE email = 'admin@feriadigital.pe';
 
 
+
+
+-- Migración defensiva: asegurar columna images en products
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS images TEXT[] DEFAULT '{}';

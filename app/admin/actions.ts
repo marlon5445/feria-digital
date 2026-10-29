@@ -310,3 +310,33 @@ export async function updateStoreAction(data: UpdateStoreInput): Promise<UpdateS
     return { success: false, error: message };
   }
 }
+
+// ─── deleteProductAction ───────────────────────────────────────────────────
+export async function deleteProductAction(productId: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    if (!productId) {
+      return { success: false, error: 'ID de producto no proporcionado.' };
+    }
+
+    const serverSupabase = await createSupabaseServerClient();
+    const { data: { user } } = await serverSupabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: 'No autorizado. Debes iniciar sesión.' };
+    }
+
+    const { error } = await serverSupabase
+      .from('products')
+      .delete()
+      .eq('id', productId);
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Error al eliminar producto.';
+    return { success: false, error: msg };
+  }
+}

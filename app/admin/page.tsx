@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'edge';
@@ -8,6 +8,8 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { createStoreAction } from '@/app/admin/actions';
 import CloudinaryUpload from '@/components/CloudinaryUpload';
+import MultiImageUpload from '@/components/MultiImageUpload';
+import { deleteProductAction } from '@/app/admin/actions';
 import {
   Store,
   Package,
@@ -49,6 +51,7 @@ interface Product {
   description: string | null;
   price: number;
   image_url: string | null;
+  images?: string[] | null;
   category: string;
   is_active: boolean;
 }
@@ -118,8 +121,11 @@ export default function AdminPage() {
     description: '',
     price: '',
     image_url: '',
+    images: [] as string[],
     category: 'General',
   });
+  const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const loadUserData = useCallback(async () => {
     setLoading(true);
@@ -339,7 +345,8 @@ export default function AdminPage() {
         name: productForm.name,
         description: productForm.description,
         price: parseFloat(productForm.price),
-        image_url: productForm.image_url || null,
+        image_url: (productForm.images.length > 0 ? productForm.images[0] : productForm.image_url) || null,
+        images: productForm.images || [],
         category: productForm.category || 'General',
         is_active: true,
       })
@@ -355,6 +362,7 @@ export default function AdminPage() {
         description: '',
         price: '',
         image_url: '',
+        images: [],
         category: 'General',
       });
       setMessage({ text: '¡Producto añadido correctamente!', type: 'success' });
@@ -362,12 +370,24 @@ export default function AdminPage() {
     setCreatingProduct(false);
   };
 
-  const handleDeleteProduct = async (id: string) => {
-    if (!confirm('¿Estás seguro de eliminar este producto?')) return;
-
-    const { error } = await supabase.from('products').delete().eq('id', id);
-    if (!error) {
-      setProducts(products.filter((p) => p.id !== id));
+  const handleConfirmDelete = async () => {
+    if (!deletingProduct) return;
+    setIsDeleting(true);
+    try {
+      const res = await deleteProductAction(deletingProduct.id);
+      if (!res.success) {
+        // Fallback supabase client si la action reporta error
+        const { error } = await supabase.from('products').delete().eq('id', deletingProduct.id);
+        if (error) throw new Error(error.message);
+      }
+      setProducts((prev) => prev.filter((p) => p.id !== deletingProduct.id));
+      setMessage({ text: 'Producto eliminado correctamente.', type: 'success' });
+      setDeletingProduct(null);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error al eliminar producto.';
+      setMessage({ text: msg, type: 'error' });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -1222,7 +1242,7 @@ export default function AdminPage() {
                     </button>
 
                     <button
-                      onClick={() => handleDeleteProduct(product.id)}
+                      type="button" onClick={() => setDeletingProduct(product)}
                       className="p-1.5 text-gray-400 hover:text-red-600 transition"
                       title="Eliminar producto"
                     >
@@ -1235,6 +1255,45 @@ export default function AdminPage() {
           )}
         </div>
       </main>
+
+      {/* Modal de Confirmación para Eliminar Producto */}
+      {deletingProduct && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4"
+          onClick={(e) => { if (e.target === e.currentTarget && !isDeleting) setDeletingProduct(null); }}
+        >
+          <div className="w-full max-w-sm bg-white rounded-2xl p-6 shadow-2xl animate-in zoom-in-95 duration-200 space-y-4">
+            <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto">
+              <Trash2 className="w-6 h-6" />
+            </div>
+            <div className="text-center">
+              <h3 className="text-base font-bold text-gray-900">¿Eliminar este producto?</h3>
+              <p className="text-xs text-gray-500 mt-1">
+                ¿Estás seguro de que deseas eliminar <strong className="text-gray-800">"{deletingProduct.name}"</strong>? Esta acción no se puede deshacer.
+              </p>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={() => setDeletingProduct(null)}
+                className="flex-1 py-2 px-3 rounded-xl border border-gray-300 text-xs font-bold text-gray-700 hover:bg-gray-50 transition disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={handleConfirmDelete}
+                className="flex-1 py-2 px-3 rounded-xl bg-red-600 hover:bg-red-700 text-xs font-bold text-white transition flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50"
+              >
+                {isDeleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
