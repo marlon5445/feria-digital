@@ -1,5 +1,7 @@
 'use client';
 
+export const runtime = 'edge';
+
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
@@ -19,24 +21,39 @@ export default function LoginPage() {
     setLoading(true);
     setErrorMsg(null);
 
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    console.log('[Login Attempt]', {
+      email: email.trim(),
+      hasSupabaseUrl: !!supabaseUrl,
+      hasAnonKey: !!supabaseAnonKey,
+      supabaseUrlPrefix: supabaseUrl ? supabaseUrl.substring(0, 15) + '...' : 'none',
+    });
+
+    if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('placeholder')) {
+      const configError = 'Error de configuración: Variables de entorno NEXT_PUBLIC_SUPABASE_URL o NEXT_PUBLIC_SUPABASE_ANON_KEY no están configuradas en Cloudflare Pages.';
+      console.error('[Login Config Error]', configError);
+      setErrorMsg(configError);
+      setLoading(false);
+      return;
+    }
+
     try {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-      if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('placeholder')) {
-        console.warn('Supabase env vars missing or invalid:', { supabaseUrl: !!supabaseUrl, supabaseAnonKey: !!supabaseAnonKey });
-      }
-
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
       });
 
       if (error) {
-        console.error('Supabase Auth error details:', error);
+        console.error('[Login Supabase Auth Error]:', error);
 
-        if (error.message?.toLowerCase().includes('failed to fetch') || error.name === 'AuthRetryableFetchError') {
-          setErrorMsg('No se pudo conectar con el servidor de autenticación. Verifica las variables de entorno (NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY) o la configuración de CORS.');
+        const errorStr = `${error.message || ''} ${error.name || ''} ${JSON.stringify(error)}`.toLowerCase();
+
+        if (errorStr.includes('failed to fetch') || error.name === 'AuthRetryableFetchError' || error.status === 0) {
+          setErrorMsg(
+            `No se pudo conectar con el servidor de autenticación (${error.message || 'Failed to fetch'}). Revisa que NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY estén agregadas en Cloudflare Pages > Settings > Environment Variables y que el proyecto de Supabase esté activo.`
+          );
           return;
         }
 
@@ -54,16 +71,19 @@ export default function LoginPage() {
         return;
       }
 
+      console.log('[Login Success]:', data.user?.email);
       router.push('/admin');
       router.refresh();
     } catch (err: unknown) {
-      console.error('Login unexpected error:', err);
+      console.error('[Login Unexpected Exception]:', err);
       const rawMsg = err instanceof Error ? err.message : String(err);
 
       if (rawMsg.toLowerCase().includes('failed to fetch') || rawMsg.toLowerCase().includes('networkerror')) {
-        setErrorMsg('No se pudo conectar con el servidor de autenticación. Verifica las variables de entorno o la configuración de CORS.');
+        setErrorMsg(
+          `Fallo de conexión (${rawMsg}). No se pudo establecer comunicación con Supabase. Verifica las variables de entorno en Cloudflare Pages o permisos de red.`
+        );
       } else {
-        setErrorMsg(rawMsg || 'No se pudo conectar con el servidor de autenticación. Verifica las variables de entorno o la configuración de CORS.');
+        setErrorMsg(`Error inesperado: ${rawMsg}`);
       }
     } finally {
       setLoading(false);
