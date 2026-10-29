@@ -126,6 +126,17 @@ export default function AdminPage() {
   });
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [productSearchTerm, setProductSearchTerm] = useState('');
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editingProductForm, setEditingProductForm] = useState({
+    name: '',
+    description: '',
+    price: '',
+    image_url: '',
+    images: [] as string[],
+    category: 'General',
+  });
+  const [savingEditProduct, setSavingEditProduct] = useState(false);
 
   const loadUserData = useCallback(async () => {
     setLoading(true);
@@ -368,6 +379,53 @@ export default function AdminPage() {
       setMessage({ text: '¡Producto añadido correctamente!', type: 'success' });
     }
     setCreatingProduct(false);
+  };
+
+  const handleOpenEditProduct = (prod: Product) => {
+    setEditingProduct(prod);
+    const prodImages = prod.images && prod.images.length > 0 ? prod.images : (prod.image_url ? [prod.image_url] : []);
+    setEditingProductForm({
+      name: prod.name,
+      description: prod.description || '',
+      price: prod.price.toString(),
+      image_url: prod.image_url || '',
+      images: prodImages,
+      category: prod.category || 'General',
+    });
+  };
+
+  const handleSaveEditProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProduct) return;
+    setSavingEditProduct(true);
+
+    try {
+      const primaryImg = (editingProductForm.images.length > 0 ? editingProductForm.images[0] : editingProductForm.image_url) || null;
+      const { data: updated, error } = await supabase
+        .from('products')
+        .update({
+          name: editingProductForm.name.trim(),
+          description: editingProductForm.description.trim() || null,
+          price: parseFloat(editingProductForm.price),
+          image_url: primaryImg,
+          images: editingProductForm.images || [],
+          category: editingProductForm.category.trim() || 'General',
+        })
+        .eq('id', editingProduct.id)
+        .select()
+        .single();
+
+      if (error) throw new Error(error.message);
+
+      setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, ...updated } : p)));
+      setMessage({ text: 'Producto actualizado exitosamente.', type: 'success' });
+      setEditingProduct(null);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error al actualizar producto.';
+      setMessage({ text: msg, type: 'error' });
+    } finally {
+      setSavingEditProduct(false);
+    }
   };
 
   const handleConfirmDelete = async () => {
@@ -1255,6 +1313,106 @@ export default function AdminPage() {
           )}
         </div>
       </main>
+
+            {/* Modal de Editar Producto */}
+      {editingProduct && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4"
+          onClick={(e) => { if (e.target === e.currentTarget && !savingEditProduct) setEditingProduct(null); }}
+        >
+          <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between px-6 py-4 bg-gray-900 text-white">
+              <div className="flex items-center gap-2">
+                <Pencil className="w-4 h-4" />
+                <h2 className="font-bold text-base">Editar Producto</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingProduct(null)}
+                className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 transition"
+                aria-label="Cerrar modal"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditProduct} className="p-6 overflow-y-auto space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Nombre del Producto *</label>
+                  <input
+                    type="text"
+                    required
+                    value={editingProductForm.name}
+                    onChange={(e) => setEditingProductForm({ ...editingProductForm, name: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Precio (S/) *</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    value={editingProductForm.price}
+                    onChange={(e) => setEditingProductForm({ ...editingProductForm, price: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Categoría *</label>
+                  <input
+                    type="text"
+                    required
+                    value={editingProductForm.category}
+                    onChange={(e) => setEditingProductForm({ ...editingProductForm, category: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Descripción</label>
+                  <textarea
+                    rows={2}
+                    value={editingProductForm.description}
+                    onChange={(e) => setEditingProductForm({ ...editingProductForm, description: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <MultiImageUpload
+                    label="Fotos del Producto (Galería)"
+                    images={editingProductForm.images}
+                    onChange={(imgs) => setEditingProductForm({ ...editingProductForm, images: imgs, image_url: imgs[0] || '' })}
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2 border-t border-gray-100">
+                <button
+                  type="button"
+                  disabled={savingEditProduct}
+                  onClick={() => setEditingProduct(null)}
+                  className="flex-1 py-2.5 rounded-xl border border-gray-300 text-sm font-bold text-gray-700 hover:bg-gray-50 transition"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingEditProduct}
+                  className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-sm font-bold text-white transition flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
+                >
+                  {savingEditProduct ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                  Guardar Cambios
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Modal de Confirmación para Eliminar Producto */}
       {deletingProduct && (
