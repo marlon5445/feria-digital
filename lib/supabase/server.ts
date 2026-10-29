@@ -1,12 +1,11 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
-export async function createClient() {
+export async function createServerSupabaseClient() {
   const cookieStore = await cookies();
-
   return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key',
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
         getAll() {
@@ -18,10 +17,13 @@ export async function createClient() {
               cookieStore.set(name, value, options)
             );
           } catch {
-            // El método setAll fue llamado desde un Server Component.
+            // Silenciar para Server Components
           }
         },
       },
     }
   );
 }
+
+// Alias para compatibilidad con código existente
+export const createClient = createServerSupabaseClient;
