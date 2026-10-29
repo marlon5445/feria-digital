@@ -283,33 +283,14 @@ USING (
 -- ==============================================================================
 -- 6. ASIGNACIÓN / INICIALIZACIÓN DE ROL SUPER ADMIN
 -- ==============================================================================
-DO $$
-DECLARE
-    v_user_id UUID;
-    v_admin_email TEXT := 'admin@feriadigital.pe';
-BEGIN
-    -- Buscar el usuario por email en auth.users
-    SELECT id INTO v_user_id FROM auth.users WHERE email = v_admin_email LIMIT 1;
 
-    IF v_user_id IS NOT NULL THEN
-        -- Actualizar metadatos en auth.users para asignarle rol 'admin'
-        UPDATE auth.users
-        SET 
-            raw_app_meta_data = COALESCE(raw_app_meta_data, '{}'::jsonb) || '{"role":"admin"}'::jsonb,
-            raw_user_meta_data = COALESCE(raw_user_meta_data, '{}'::jsonb) || '{"role":"admin"}'::jsonb
-        WHERE id = v_user_id;
-
-        -- Asegurar registro correspondiente en public.profiles
-        INSERT INTO public.profiles (id, email, role, full_name, updated_at)
-        VALUES (v_user_id, v_admin_email, 'admin', 'Super Administrador', now())
-        ON CONFLICT (id) DO UPDATE
-        SET 
-            role = 'admin',
-            email = v_admin_email,
-            updated_at = now();
-
-        RAISE NOTICE 'Rol de administrador asignado exitosamente a: % (ID: %)', v_admin_email, v_user_id;
-    ELSE
-        RAISE NOTICE 'El usuario % aún no existe en auth.users. Se inicializará con rol admin al iniciar sesión o invocar /api/admin/seed.', v_admin_email;
-    END IF;
-END $$;
+-- Asignar rol de super_admin en public.profiles para el usuario existente en auth.users
+INSERT INTO public.profiles (id, email, role, full_name, updated_at)
+SELECT id, email, 'admin', 'Super Administrador', timezone('utc'::text, now())
+FROM auth.users
+WHERE email = 'admin@feriadigital.pe'
+ON CONFLICT (id) DO UPDATE 
+SET 
+    role = 'admin',
+    email = EXCLUDED.email,
+    updated_at = timezone('utc'::text, now());
