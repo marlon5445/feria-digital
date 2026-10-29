@@ -116,63 +116,55 @@ export default function CatalogClient({
       {/* ============================================================== */}
       {/* 1. HERO HEADER & IDENTIDAD DE MARCA */}
       {/* ============================================================== */}
-      <div className="relative">
-        {/* Banner con degradado armónico y patrón decorativo */}
-        <div
-          className="h-44 sm:h-52 w-full relative overflow-hidden"
-          style={{
-            background: `linear-gradient(135deg, ${themeColor} 0%, #0f172a 100%)`,
-          }}
-        >
-          {/* Acentos de luz sutiles */}
-          <div className="absolute -top-16 -left-16 w-64 h-64 rounded-full bg-white/10 blur-2xl pointer-events-none" />
-          <div className="absolute -bottom-16 -right-16 w-64 h-64 rounded-full bg-white/10 blur-2xl pointer-events-none" />
+      <div
+        className="w-full relative overflow-hidden py-8 sm:py-10"
+        style={{
+          background: `linear-gradient(135deg, ${themeColor} 0%, #0f172a 100%)`,
+        }}
+      >
+        {/* Acentos de luz sutiles */}
+        <div className="absolute -top-16 -left-16 w-64 h-64 rounded-full bg-white/10 blur-2xl pointer-events-none" />
+        <div className="absolute -bottom-16 -right-16 w-64 h-64 rounded-full bg-white/10 blur-2xl pointer-events-none" />
 
-          {/* Badge de Verificación o Campaña */}
-          <div className="absolute top-4 right-4 sm:right-6">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/15 backdrop-blur-md text-white border border-white/20 shadow-sm">
-              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-              <span>Tienda Oficial</span>
-            </span>
-          </div>
+        {/* Badge de Verificación */}
+        <div className="absolute top-4 right-4 sm:right-6">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/15 backdrop-blur-md text-white border border-white/20 shadow-sm">
+            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+            <span>Tienda Oficial</span>
+          </span>
         </div>
 
-        {/* Tarjeta de Identidad de Marca Superpuesta */}
-        <div className="max-w-4xl mx-auto px-4 -mt-16 sm:-mt-20 relative z-10 flex flex-col items-center text-center">
-          {/* Logo de la Tienda */}
-          <div className="ring-4 ring-white shadow-xl bg-white w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden flex items-center justify-center transition-transform hover:scale-105 duration-200">
+        {/* Contenido unificado sobre el banner */}
+        <div className="max-w-4xl mx-auto px-4 relative z-10 flex flex-col items-center text-center gap-3">
+          {/* Logo de la Tienda — tarjeta con esquinas redondeadas, sin recorte circular */}
+          <div className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-2xl shadow-lg p-2.5 flex items-center justify-center border border-slate-100 shrink-0 transition-transform hover:scale-105 duration-200">
             {store.logo_url ? (
               /* eslint-disable-next-line @next/next/no-img-element */
               <img
                 src={store.logo_url}
                 alt={store.name}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
               />
             ) : (
-              <StoreIcon className="w-12 h-12 text-slate-400" />
+              <StoreIcon className="w-10 h-10 text-slate-400" />
             )}
           </div>
 
-          {/* Nombre y subtítulo */}
-          <h1 className="mt-3 text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
+          {/* Nombre de la Tienda */}
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight drop-shadow-sm">
             {store.name}
           </h1>
-          <p className="mt-1 text-sm sm:text-base text-slate-600 max-w-lg font-medium">
-            Catálogo digital de productos con pedidos directos a WhatsApp y pago con Yape / Plin.
-          </p>
 
           {/* Botón Directo a WhatsApp */}
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
-            <a
-              href={whatsappUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-all shadow-sm hover:shadow"
-            >
-              <MessageCircle className="w-4 h-4 text-emerald-600" />
-              <span>Contactar por WhatsApp</span>
-            </a>
-          </div>
+          <a
+            href={whatsappUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-all shadow-sm hover:shadow"
+          >
+            <MessageCircle className="w-4 h-4 text-emerald-600" />
+            <span>Contactar por WhatsApp</span>
+          </a>
         </div>
       </div>
 
