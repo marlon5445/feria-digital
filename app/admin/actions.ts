@@ -63,14 +63,14 @@ export async function createStoreAction(data: CreateStoreInput): Promise<CreateS
       };
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
-    if (!supabaseUrl || !serviceRoleKey) {
+    if (!serviceRoleKey || serviceRoleKey.includes('placeholder')) {
       return {
         success: false,
         error:
-          'Error de configuración en el servidor: La variable SUPABASE_SERVICE_ROLE_KEY no está configurada. Por favor define esta clave en tu archivo .env.local para permitir la creación administrativa de usuarios.',
+          'Error de configuración: La variable SUPABASE_SERVICE_ROLE_KEY no está configurada en las variables de entorno de Cloudflare Pages. Por favor agrégala en Cloudflare Pages (Settings > Variables and Secrets).',
       };
     }
 

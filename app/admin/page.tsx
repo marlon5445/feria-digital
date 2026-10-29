@@ -1,5 +1,8 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
@@ -228,10 +231,21 @@ export default function AdminPage() {
     setMessage(null);
 
     try {
-      const result = await createStoreAction(adminCreateStoreForm);
+      let result;
+      try {
+        result = await createStoreAction(adminCreateStoreForm);
+      } catch (actionErr) {
+        console.warn('Fallback a API route tras excepción en Server Action:', actionErr);
+        const res = await fetch('/api/admin/create-store', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(adminCreateStoreForm),
+        });
+        result = await res.json();
+      }
 
-      if (!result.success || !result.store || !result.owner) {
-        throw new Error(result.error || 'Error al registrar el negocio.');
+      if (!result || !result.success || !result.store || !result.owner) {
+        throw new Error(result?.error || 'Error al registrar el negocio.');
       }
 
       setNewStoreModalResult({

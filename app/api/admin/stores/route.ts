@@ -3,6 +3,9 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { createStoreAction } from '@/app/admin/actions';
 
+export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
+
 // GET: Listar todas las tiendas (solo para Super Admin)
 export async function GET() {
   const supabase = await createClient();
