@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { createStoreAction } from '@/app/admin/actions';
 import CloudinaryUpload from '@/components/CloudinaryUpload';
 import {
   Store,
@@ -227,19 +228,16 @@ export default function AdminPage() {
     setMessage(null);
 
     try {
-      const res = await fetch('/api/admin/stores', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(adminCreateStoreForm),
-      });
+      const result = await createStoreAction(adminCreateStoreForm);
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Error al crear la tienda.');
+      if (!result.success || !result.store || !result.owner) {
+        throw new Error(result.error || 'Error al registrar el negocio.');
       }
 
-      setNewStoreModalResult(data);
+      setNewStoreModalResult({
+        store: result.store,
+        owner: result.owner,
+      });
       setMessage({ text: '¡Tienda y credenciales creadas con éxito!', type: 'success' });
       setAdminCreateStoreForm({
         owner_email: '',
@@ -259,7 +257,7 @@ export default function AdminPage() {
         setAllStores(listData.stores || []);
       }
     } catch (err: unknown) {
-      const errMessage = err instanceof Error ? err.message : 'Error desconocido';
+      const errMessage = err instanceof Error ? err.message : 'Error inesperado al crear el negocio.';
       setMessage({ text: errMessage, type: 'error' });
     } finally {
       setCreatingStore(false);
