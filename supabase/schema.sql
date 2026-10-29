@@ -26,7 +26,7 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON ROUTINES TO postgres, ano
 CREATE TABLE IF NOT EXISTS public.profiles (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     email TEXT UNIQUE NOT NULL,
-    role TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('admin', 'user')),
+    role TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('admin', 'super_admin', 'user')),
     full_name TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
@@ -281,87 +281,35 @@ USING (
 );
 
 -- ==============================================================================
--- 6. INICIALIZACIÓN / ASIGNACIÓN DE CUENTA SUPER ADMIN
+-- 6. ASIGNACIÓN / INICIALIZACIÓN DE ROL SUPER ADMIN
 -- ==============================================================================
 DO $$
 DECLARE
-    admin_id UUID;
-    admin_email TEXT := 'admin@feriadigital.pe';
-    admin_password TEXT := 'AdminFeria2025!';
+    v_user_id UUID;
+    v_admin_email TEXT := 'admin@feriadigital.pe';
 BEGIN
-    SELECT id INTO admin_id FROM auth.users WHERE email = admin_email;
+    -- Buscar el usuario por email en auth.users
+    SELECT id INTO v_user_id FROM auth.users WHERE email = v_admin_email LIMIT 1;
 
-    IF admin_id IS NULL THEN
-        -- Crear usuario en auth.users
-        INSERT INTO auth.users (
-            instance_id,
-            id,
-            aud,
-            role,
-            email,
-            encrypted_password,
-            email_confirmed_at,
-            raw_app_meta_data,
-            raw_user_meta_data,
-            created_at,
-            updated_at
-        )
-        VALUES (
-            '00000000-0000-0000-0000-000000000000',
-            gen_random_uuid(),
-            'authenticated',
-            'authenticated',
-            admin_email,
-            crypt(admin_password, gen_salt('bf')),
-            now(),
-            '{"provider":"email","providers":["email"],"role":"admin"}'::jsonb,
-            '{"role":"admin","full_name":"Super Administrador"}'::jsonb,
-            now(),
-            now()
-        )
-        RETURNING id INTO admin_id;
-
-        -- Crear identidad asociada
-        INSERT INTO auth.identities (
-            id,
-            user_id,
-            identity_data,
-            provider,
-            provider_id,
-            last_sign_in_at,
-            created_at,
-            updated_at
-        )
-        VALUES (
-            gen_random_uuid(),
-            admin_id,
-            format('{"sub":"%s","email":"%s"}', admin_id::text, admin_email)::jsonb,
-            'email',
-            admin_id::text,
-            now(),
-            now(),
-            now()
-        );
-    ELSE
-        -- Actualizar usuario existente para garantizar credenciales y rol de administrador
+    IF v_user_id IS NOT NULL THEN
+        -- Actualizar metadatos en auth.users para asignarle rol 'admin'
         UPDATE auth.users
         SET 
-            encrypted_password = crypt(admin_password, gen_salt('bf')),
-            raw_app_meta_data = raw_app_meta_data || '{"role":"admin"}'::jsonb,
-            raw_user_meta_data = raw_user_meta_data || '{"role":"admin"}'::jsonb,
-            email_confirmed_at = COALESCE(email_confirmed_at, now()),
-            updated_at = now()
-        WHERE id = admin_id;
+            raw_app_meta_data = COALESCE(raw_app_meta_data, '{}'::jsonb) || '{"role":"admin"}'::jsonb,
+            raw_user_meta_data = COALESCE(raw_user_meta_data, '{}'::jsonb) || '{"role":"admin"}'::jsonb
+        WHERE id = v_user_id;
+
+        -- Asegurar registro correspondiente en public.profiles
+        INSERT INTO public.profiles (id, email, role, full_name, updated_at)
+        VALUES (v_user_id, v_admin_email, 'admin', 'Super Administrador', now())
+        ON CONFLICT (id) DO UPDATE
+        SET 
+            role = 'admin',
+            email = v_admin_email,
+            updated_at = now();
+
+        RAISE NOTICE 'Rol de administrador asignado exitosamente a: % (ID: %)', v_admin_email, v_user_id;
+    ELSE
+        RAISE NOTICE 'El usuario % aún no existe en auth.users. Se inicializará con rol admin al iniciar sesión o invocar /api/admin/seed.', v_admin_email;
     END IF;
-
-    -- Asegurar perfil en public.profiles
-    INSERT INTO public.profiles (id, email, role, full_name, updated_at)
-    VALUES (admin_id, admin_email, 'admin', 'Super Administrador', now())
-    ON CONFLICT (id) DO UPDATE
-    SET 
-        role = 'admin',
-        email = admin_email,
-        updated_at = now();
-
-    RAISE NOTICE 'Super Admin verificado y configurado: % (ID: %)', admin_email, admin_id;
 END $$;
