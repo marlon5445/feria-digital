@@ -231,7 +231,7 @@ export default function CartClient({ store }: { store: Store }) {
               value={yapeOperationCode}
               onChange={(e) => setYapeOperationCode(e.target.value)}
               placeholder="Ej: 12345678"
-              className="w-full bg-white border border-purple-300 rounded-lg px-3 py-2 text-sm focus:ring-purple-500 focus:border-purple-500"
+              className="w-full bg-white border border-purple-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-purple-500 focus:border-purple-500"
             />
           </div>
         </div>
@@ -251,7 +251,7 @@ export default function CartClient({ store }: { store: Store }) {
               value={customerName}
               onChange={(e) => setCustomerName(e.target.value)}
               placeholder="Ej: María Gómez"
-              className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500"
+              className="mt-1 block w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-red-500 focus:border-red-500"
             />
           </div>
 
@@ -291,7 +291,7 @@ export default function CartClient({ store }: { store: Store }) {
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 placeholder="Av. Principal 123, Dpto 402 - Frente al parque"
-                className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500"
+                className="mt-1 block w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-red-500 focus:border-red-500"
               />
             </div>
           )}

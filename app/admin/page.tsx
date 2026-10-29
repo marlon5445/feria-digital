@@ -509,7 +509,7 @@ export default function AdminPage() {
                       value={adminCreateStoreForm.owner_email}
                       onChange={(e) => setAdminCreateStoreForm({ ...adminCreateStoreForm, owner_email: e.target.value })}
                       placeholder="emprendedor@ejemplo.com"
-                      className="block w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500"
+                      className="block w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-red-500 focus:border-red-500"
                     />
                   </div>
                   <div>
@@ -522,7 +522,7 @@ export default function AdminPage() {
                       value={adminCreateStoreForm.owner_password}
                       onChange={(e) => setAdminCreateStoreForm({ ...adminCreateStoreForm, owner_password: e.target.value })}
                       placeholder="Clave1234!"
-                      className="block w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono focus:ring-red-500 focus:border-red-500"
+                      className="block w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono text-gray-900 placeholder:text-gray-400 focus:ring-red-500 focus:border-red-500"
                     />
                   </div>
                 </div>
@@ -546,7 +546,7 @@ export default function AdminPage() {
                       });
                     }}
                     placeholder="Ej: Dulces y Detalles Santa"
-                    className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500"
+                    className="mt-1 block w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-red-500 focus:border-red-500"
                   />
                 </div>
 
@@ -562,7 +562,7 @@ export default function AdminPage() {
                       value={adminCreateStoreForm.slug}
                       onChange={(e) => setAdminCreateStoreForm({ ...adminCreateStoreForm, slug: e.target.value })}
                       placeholder="dulces-santa"
-                      className="block w-full min-w-0 flex-1 rounded-none rounded-r-lg border border-gray-300 px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500 font-mono"
+                      className="block w-full min-w-0 flex-1 rounded-none rounded-r-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-red-500 focus:border-red-500 font-mono"
                     />
                   </div>
                 </div>
@@ -575,7 +575,7 @@ export default function AdminPage() {
                     value={adminCreateStoreForm.whatsapp_number}
                     onChange={(e) => setAdminCreateStoreForm({ ...adminCreateStoreForm, whatsapp_number: e.target.value })}
                     placeholder="Ej: 51987654321"
-                    className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500"
+                    className="mt-1 block w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-red-500 focus:border-red-500"
                   />
                 </div>
 
@@ -587,7 +587,7 @@ export default function AdminPage() {
                     value={adminCreateStoreForm.yape_number}
                     onChange={(e) => setAdminCreateStoreForm({ ...adminCreateStoreForm, yape_number: e.target.value })}
                     placeholder="Ej: 987654321"
-                    className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500"
+                    className="mt-1 block w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-red-500 focus:border-red-500"
                   />
                 </div>
 
@@ -783,7 +783,7 @@ export default function AdminPage() {
                   value={storeForm.name}
                   onChange={(e) => setStoreForm({ ...storeForm, name: e.target.value })}
                   placeholder="Ej: Regalos y Detalles Santa Claus"
-                  className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500"
+                  className="mt-1 block w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-red-500 focus:border-red-500"
                 />
               </div>
 
@@ -799,7 +799,7 @@ export default function AdminPage() {
                     value={storeForm.slug}
                     onChange={(e) => setStoreForm({ ...storeForm, slug: e.target.value })}
                     placeholder="mis-detalles-navidenos"
-                    className="block w-full min-w-0 flex-1 rounded-none rounded-r-lg border border-gray-300 px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500 font-mono"
+                    className="block w-full min-w-0 flex-1 rounded-none rounded-r-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-red-500 focus:border-red-500 font-mono"
                   />
                 </div>
               </div>
@@ -812,7 +812,7 @@ export default function AdminPage() {
                   value={storeForm.whatsapp_number}
                   onChange={(e) => setStoreForm({ ...storeForm, whatsapp_number: e.target.value })}
                   placeholder="Ej: 51987654321"
-                  className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500"
+                  className="mt-1 block w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-red-500 focus:border-red-500"
                 />
               </div>
 
@@ -824,7 +824,7 @@ export default function AdminPage() {
                   value={storeForm.yape_number}
                   onChange={(e) => setStoreForm({ ...storeForm, yape_number: e.target.value })}
                   placeholder="Ej: 987654321"
-                  className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500"
+                  className="mt-1 block w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-red-500 focus:border-red-500"
                 />
               </div>
 
@@ -880,7 +880,7 @@ export default function AdminPage() {
                   value={productForm.name}
                   onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
                   placeholder="Ej: Panetón Artesanal Navideño 900g"
-                  className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500"
+                  className="mt-1 block w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-red-500 focus:border-red-500"
                 />
               </div>
 
@@ -893,7 +893,7 @@ export default function AdminPage() {
                   value={productForm.price}
                   onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
                   placeholder="35.00"
-                  className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500"
+                  className="mt-1 block w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-red-500 focus:border-red-500"
                 />
               </div>
 
@@ -905,7 +905,7 @@ export default function AdminPage() {
                   value={productForm.category}
                   onChange={(e) => setProductForm({ ...productForm, category: e.target.value })}
                   placeholder="Ej: Canastas, Chocolatería, Decoración"
-                  className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500"
+                  className="mt-1 block w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-red-500 focus:border-red-500"
                 />
               </div>
 
@@ -916,7 +916,7 @@ export default function AdminPage() {
                   value={productForm.description}
                   onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
                   placeholder="Detalles sobre presentación, empaque o sabor"
-                  className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500"
+                  className="mt-1 block w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-red-500 focus:border-red-500"
                 />
               </div>
 
