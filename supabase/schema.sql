@@ -322,3 +322,24 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authentic
 -- Notificar a PostgREST para recargar el esquema en caché inmediatamente
 NOTIFY pgrst, 'reload schema';
 
+-- ==============================================================================
+-- 8. SANITIZACIÓN DE TOKENS EN AUTH.USERS Y CONFIRMACIÓN DE ADMIN
+-- ==============================================================================
+-- Previene errores de escaneo en GoTrue (NULL to string unsupported)
+UPDATE auth.users
+SET 
+    confirmation_token = COALESCE(confirmation_token, ''),
+    recovery_token = COALESCE(recovery_token, ''),
+    email_change_token_new = COALESCE(email_change_token_new, ''),
+    email_change = COALESCE(email_change, '')
+WHERE confirmation_token IS NULL 
+   OR recovery_token IS NULL 
+   OR email_change_token_new IS NULL 
+   OR email_change IS NULL;
+
+-- Confirmar automáticamente al usuario administrador
+UPDATE auth.users
+SET email_confirmed_at = COALESCE(email_confirmed_at, now())
+WHERE email = 'admin@feriadigital.pe';
+
+
