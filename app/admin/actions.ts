@@ -239,3 +239,74 @@ export async function createStoreAction(data: CreateStoreInput): Promise<CreateS
     };
   }
 }
+
+// ─── updateStoreAction ──────────────────────────────────────────────────────
+export interface UpdateStoreInput {
+  id: string;
+  name: string;
+  slug: string;
+  whatsapp_number: string;
+  yape_number: string;
+  theme_color: string;
+  logo_url?: string | null;
+}
+
+export interface UpdateStoreResponse {
+  success: boolean;
+  error?: string;
+  store?: UpdateStoreInput;
+}
+
+export async function updateStoreAction(data: UpdateStoreInput): Promise<UpdateStoreResponse> {
+  try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
+    if (!serviceRoleKey || serviceRoleKey.includes('placeholder')) {
+      return { success: false, error: 'Error de configuración: SUPABASE_SERVICE_ROLE_KEY no está configurada.' };
+    }
+
+    // Verificar sesión admin
+    try {
+      const serverSupabase = await createSupabaseServerClient();
+      const { data: { user: currentUser } } = await serverSupabase.auth.getUser();
+      if (!currentUser) return { success: false, error: 'No autorizado.' };
+    } catch (sessionErr) {
+      console.warn('[updateStoreAction] Advertencia sesión:', sessionErr);
+    }
+
+    const { createClient: createAdminClient } = await import('@supabase/supabase-js');
+    const supabaseAdmin = createAdminClient(supabaseUrl, serviceRoleKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    const normalizedSlug = data.slug
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9-]/g, '-')
+      .replace(/^-+|-+$/g, '');
+
+    const { data: updated, error } = await supabaseAdmin
+      .from('stores')
+      .update({
+        name: data.name.trim(),
+        slug: normalizedSlug,
+        whatsapp_number: data.whatsapp_number.trim(),
+        yape_number: data.yape_number.trim(),
+        theme_color: data.theme_color,
+        logo_url: data.logo_url ?? null,
+      })
+      .eq('id', data.id)
+      .select()
+      .single();
+
+    if (error) {
+      return { success: false, error: `Error al actualizar la tienda: ${error.message}` };
+    }
+
+    return { success: true, store: updated };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Error inesperado al actualizar el negocio.';
+    return { success: false, error: message };
+  }
+}

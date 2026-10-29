@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'edge';
@@ -24,7 +24,10 @@ import {
   Copy,
   CheckCircle,
   KeyRound,
-  Sparkles
+  Sparkles,
+  Search,
+  Pencil,
+  X,
 } from 'lucide-react';
 
 interface StoreData {
@@ -79,6 +82,13 @@ export default function AdminPage() {
   const [creatingStore, setCreatingStore] = useState(false);
   const [newStoreModalResult, setNewStoreModalResult] = useState<NewStoreResult | null>(null);
   const [copiedKey, setCopiedKey] = useState(false);
+
+  // Estados para Buscador y Modal de Edición (Super Admin)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [editingStore, setEditingStore] = useState<StoreData | null>(null)
+  const [editForm, setEditForm] = useState({ name: '', slug: '', whatsapp_number: '', yape_number: '', theme_color: '#dc2626', logo_url: '' })
+  const [savingEdit, setSavingEdit] = useState(false)
+  const [editMessage, setEditMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null)
 
   // Formulario de Super Admin para Crear Tienda + Usuario
   const [adminCreateStoreForm, setAdminCreateStoreForm] = useState({
@@ -374,6 +384,55 @@ export default function AdminPage() {
     }
   };
 
+  // Handler: abrir modal de edición pre-llenado
+  const handleOpenEdit = (item: StoreData) => {
+    setEditingStore(item);
+    setEditForm({
+      name: item.name,
+      slug: item.slug,
+      whatsapp_number: item.whatsapp_number,
+      yape_number: item.yape_number,
+      theme_color: item.theme_color || '#dc2626',
+      logo_url: item.logo_url || '',
+    });
+    setEditMessage(null);
+  };
+
+  // Handler: guardar cambios del modal de edición vía Supabase client
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingStore) return;
+    setSavingEdit(true);
+    setEditMessage(null);
+
+    const normalizedSlug = editForm.slug.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/^-+|-+$/, '');
+    const { data: updated, error } = await supabase
+      .from('stores')
+      .update({
+        name: editForm.name.trim(),
+        slug: normalizedSlug,
+        whatsapp_number: editForm.whatsapp_number.trim(),
+        yape_number: editForm.yape_number.trim(),
+        theme_color: editForm.theme_color,
+        logo_url: editForm.logo_url || null,
+      })
+      .eq('id', editingStore.id)
+      .select()
+      .single();
+
+    if (error) {
+      setEditMessage({ text: 'Error al actualizar: ' + error.message, type: 'error' });
+    } else {
+      setAllStores((prev) => prev.map((s) => (s.id === editingStore.id ? { ...s, ...updated } : s)));
+      setEditMessage({ text: '¡Negocio actualizado correctamente!', type: 'success' });
+      setTimeout(() => {
+        setEditingStore(null);
+        setMessage({ text: '¡Negocio actualizado correctamente!', type: 'success' });
+      }, 1200);
+    }
+    setSavingEdit(false);
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push('/login');
@@ -640,10 +699,28 @@ export default function AdminPage() {
 
           {/* Listado de Negocios Registrados */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sm:p-8">
-            <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-              <Users className="w-5 h-5 mr-2 text-red-600" />
-              Negocios Registrados en la Plataforma ({allStores.length})
-            </h2>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center shrink-0">
+                <Users className="w-5 h-5 mr-2 text-red-600" />
+                Negocios Registrados ({allStores.length})
+              </h2>
+              {/* Buscador en tiempo real */}
+              <div className="relative w-full sm:max-w-xs">
+                <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Buscar por nombre, slug, WhatsApp..."
+                  className="w-full pl-9 pr-9 py-2 text-sm border border-gray-300 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent focus:bg-white transition"
+                />
+                {searchTerm && (
+                  <button onClick={() => setSearchTerm('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700">
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            </div>
 
             {allStores.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
@@ -701,6 +778,93 @@ export default function AdminPage() {
             )}
           </div>
         </main>
+
+        {/* ── Modal Editar Negocio ───────────────────────────────────────── */}
+        {editingStore && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            onClick={(e) => { if (e.target === e.currentTarget) setEditingStore(null); }}
+          >
+            <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 py-4 bg-gray-900 text-white">
+                <div className="flex items-center gap-2">
+                  <Pencil className="w-4 h-4" />
+                  <h2 className="font-bold text-base">Editar Datos del Negocio</h2>
+                </div>
+                <button onClick={() => setEditingStore(null)} className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 transition" aria-label="Cerrar">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Feedback */}
+              {editMessage && (
+                <div className={`mx-6 mt-4 px-4 py-2.5 rounded-lg text-sm font-medium ${editMessage.type === "success" ? "bg-green-50 text-green-800 border border-green-200" : "bg-red-50 text-red-800 border border-red-200"}`}>
+                  {editMessage.text}
+                </div>
+              )}
+
+              <form onSubmit={handleSaveEdit} className="px-6 py-5 space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Nombre del Negocio *</label>
+                    <input type="text" required value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Slug de la URL *</label>
+                    <div className="flex rounded-lg shadow-sm">
+                      <span className="inline-flex items-center px-2.5 rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-xs font-mono">/</span>
+                      <input type="text" required value={editForm.slug} onChange={(e) => setEditForm({ ...editForm, slug: e.target.value })}
+                        className="flex-1 min-w-0 rounded-r-lg border border-gray-300 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">WhatsApp Oficial *</label>
+                    <input type="text" required value={editForm.whatsapp_number} onChange={(e) => setEditForm({ ...editForm, whatsapp_number: e.target.value })}
+                      placeholder="51987654321" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Número de Yape / Plin *</label>
+                    <input type="text" required value={editForm.yape_number} onChange={(e) => setEditForm({ ...editForm, yape_number: e.target.value })}
+                      placeholder="987654321" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent" />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Color del Catálogo</label>
+                    <div className="flex items-center gap-2">
+                      <input type="color" value={editForm.theme_color} onChange={(e) => setEditForm({ ...editForm, theme_color: e.target.value })}
+                        className="h-9 w-14 p-1 border border-gray-300 rounded cursor-pointer" />
+                      <span className="text-xs font-mono text-gray-600">{editForm.theme_color}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <CloudinaryUpload
+                    label="Logo de la Tienda"
+                    currentImageUrl={editForm.logo_url}
+                    onUploadSuccess={(url) => setEditForm({ ...editForm, logo_url: url })}
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button type="button" onClick={() => setEditingStore(null)}
+                    className="flex-1 py-2.5 rounded-xl text-sm font-bold border border-gray-300 text-gray-700 hover:bg-gray-50 transition">
+                    Cancelar
+                  </button>
+                  <button type="submit" disabled={savingEdit}
+                    className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white bg-red-600 hover:bg-red-700 shadow-sm transition disabled:opacity-60 flex items-center justify-center gap-2">
+                    {savingEdit ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                    Guardar Cambios
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
