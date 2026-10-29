@@ -72,6 +72,39 @@ export default function LoginPage() {
       }
 
       console.log('[Login Success]:', data.user?.email);
+
+      // Verificación defensiva y creación automática de perfil si no existe
+      if (data.user) {
+        try {
+          const { data: profile, error: profileErr } = await supabase
+            .from('profiles')
+            .select('id, role')
+            .eq('id', data.user.id)
+            .maybeSingle();
+
+          // Si no existe el perfil o la consulta retornó nula sin error fatal, crearlo automáticamente
+          if (!profile && (!profileErr || profileErr.code === 'PGRST116')) {
+            const isAdmin =
+              data.user.email?.toLowerCase().includes('admin@feriadigital.pe') ||
+              data.user.user_metadata?.role === 'admin' ||
+              data.user.app_metadata?.role === 'admin';
+
+            await supabase.from('profiles').upsert({
+              id: data.user.id,
+              email: data.user.email,
+              role: isAdmin ? 'admin' : 'user',
+              full_name: data.user.user_metadata?.full_name || data.user.email?.split('@')[0],
+              updated_at: new Date().toISOString(),
+            });
+          }
+        } catch (profileCatchErr) {
+          // Si la consulta a Supabase retorna un error de esquema (PGRST301 o similar),
+          // aseguramos que no rompa la petición lanzando una excepción global, sino que permita
+          // al usuario autenticarse y continuar normalmente.
+          console.warn('[Login Profile Query Handled Defensively]:', profileCatchErr);
+        }
+      }
+
       router.push('/admin');
       router.refresh();
     } catch (err: unknown) {

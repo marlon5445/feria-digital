@@ -9,14 +9,18 @@
 -- 1. EXTENSIONES Y PERMISOS BASE
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
-GRANT USAGE ON SCHEMA public TO postgres, anon, authenticated, service_role;
-GRANT ALL ON ALL TABLES IN SCHEMA public TO postgres, anon, authenticated, service_role;
-GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO postgres, anon, authenticated, service_role;
-GRANT ALL ON ALL ROUTINES IN SCHEMA public TO postgres, anon, authenticated, service_role;
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO anon, authenticated;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON ROUTINES TO anon, authenticated;
 
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO postgres, anon, authenticated, service_role;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO postgres, anon, authenticated, service_role;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON ROUTINES TO postgres, anon, authenticated, service_role;
+-- Permisos adicionales para service_role y postgres
+GRANT ALL ON SCHEMA public TO postgres, service_role;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO postgres, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO postgres, service_role;
+GRANT ALL ON ALL ROUTINES IN SCHEMA public TO postgres, service_role;
 
 -- ==============================================================================
 -- 2. TABLAS PRINCIPALES
@@ -161,6 +165,18 @@ WITH CHECK (
     OR (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
 );
 
+DROP POLICY IF EXISTS "Creación de perfiles por el propio usuario o admin" ON public.profiles;
+DROP POLICY IF EXISTS "Creación de perfiles por dueño o admin" ON public.profiles;
+CREATE POLICY "Creación de perfiles por el propio usuario o admin"
+ON public.profiles
+FOR INSERT
+TO authenticated
+WITH CHECK (
+    auth.uid() = id
+    OR (auth.jwt() -> 'user_metadata' ->> 'role') = 'admin'
+    OR (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
+);
+
 -- B. Políticas para STORES
 DROP POLICY IF EXISTS "Lectura pública de tiendas" ON public.stores;
 CREATE POLICY "Lectura pública de tiendas"
@@ -294,3 +310,15 @@ SET
     role = 'admin',
     email = EXCLUDED.email,
     updated_at = timezone('utc'::text, now());
+
+-- ==============================================================================
+-- 7. REAFIRMACIÓN DE PERMISOS DE ESQUEMA Y RECARGA DE CACHÉ POSTGREST
+-- ==============================================================================
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated;
+
+-- Notificar a PostgREST para recargar el esquema en caché inmediatamente
+NOTIFY pgrst, 'reload schema';
+

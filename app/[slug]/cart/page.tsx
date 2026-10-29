@@ -13,15 +13,23 @@ export default async function CartPage({ params }: PageProps) {
   const { slug } = await params;
   const supabase = await createClient();
 
-  const { data: store, error } = await supabase
-    .from('stores')
-    .select('*')
-    .eq('slug', slug)
-    .single();
+  try {
+    const { data: store, error } = await supabase
+      .from('stores')
+      .select('*')
+      .eq('slug', slug)
+      .maybeSingle();
 
-  if (error || !store) {
+    if (error || !store) {
+      if (error) {
+        console.warn('[CartPage] Error al consultar store:', error.message || error);
+      }
+      notFound();
+    }
+
+    return <CartClient store={store} />;
+  } catch (err) {
+    console.error('[CartPage] Error inesperado en consulta de esquema:', err);
     notFound();
   }
-
-  return <CartClient store={store} />;
 }

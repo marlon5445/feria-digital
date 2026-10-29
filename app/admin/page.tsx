@@ -109,65 +109,111 @@ export default function AdminPage() {
 
   const loadUserData = useCallback(async () => {
     setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-    if (!user) {
-      router.push('/login');
-      return;
-    }
+      if (userError || !user) {
+        router.push('/login');
+        return;
+      }
 
-    setCurrentUserEmail(user.email || '');
+      setCurrentUserEmail(user.email || '');
 
-    // Verificar si el usuario es Super Admin (por metadata o correo admin)
-    const adminCheck =
-      user.user_metadata?.role === 'admin' ||
-      user.app_metadata?.role === 'admin' ||
-      user.email?.toLowerCase().includes('admin@feriadigital.pe');
+      // Verificar si el usuario es Super Admin (por metadata o correo admin)
+      let adminCheck =
+        user.user_metadata?.role === 'admin' ||
+        user.app_metadata?.role === 'admin' ||
+        user.email?.toLowerCase().includes('admin@feriadigital.pe');
 
-    setIsAdmin(!!adminCheck);
-
-    if (adminCheck) {
-      // Cargar todas las tiendas para el Super Admin
+      // Verificación y auto-creación defensiva del perfil en public.profiles
       try {
-        const res = await fetch('/api/admin/stores');
-        if (res.ok) {
-          const data = await res.json();
-          setAllStores(data.stores || []);
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('id, role, full_name')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (profileError) {
+          console.warn('[Admin loadUserData] Advertencia en consulta a profiles (esquema o red):', profileError.message || profileError);
+        } else if (!profileData) {
+          // Si no existe el perfil tras el login, crearlo automáticamente
+          await supabase.from('profiles').upsert({
+            id: user.id,
+            email: user.email,
+            role: adminCheck ? 'admin' : 'user',
+            full_name: user.user_metadata?.full_name || user.email?.split('@')[0],
+            updated_at: new Date().toISOString(),
+          });
+        } else if (profileData.role === 'admin' || profileData.role === 'super_admin') {
+          adminCheck = true;
         }
-      } catch (err) {
-        console.error('Error al cargar tiendas como admin:', err);
+      } catch (profileCatchErr) {
+        // Aseguramos que un error de esquema en profiles no rompa la aplicación
+        console.warn('[Admin loadUserData] Excepción de esquema en profiles manejada defensivamente:', profileCatchErr);
       }
-    } else {
-      // Cargar la tienda propia del usuario
-      const { data: storeData } = await supabase
-        .from('stores')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
 
-      if (storeData) {
-        setStore(storeData);
-        setStoreForm({
-          slug: storeData.slug,
-          name: storeData.name,
-          logo_url: storeData.logo_url || '',
-          whatsapp_number: storeData.whatsapp_number,
-          yape_number: storeData.yape_number,
-          theme_color: storeData.theme_color || '#dc2626',
-        });
+      setIsAdmin(!!adminCheck);
 
-        // Cargar productos
-        const { data: productsData } = await supabase
-          .from('products')
-          .select('*')
-          .eq('store_id', storeData.id)
-          .order('created_at', { ascending: false });
+      if (adminCheck) {
+        // Cargar todas las tiendas para el Super Admin
+        try {
+          const res = await fetch('/api/admin/stores');
+          if (res.ok) {
+            const data = await res.json();
+            setAllStores(data.stores || []);
+          }
+        } catch (err) {
+          console.error('Error al cargar tiendas como admin:', err);
+        }
+      } else {
+        // Cargar la tienda propia del usuario de manera defensiva (stores / businesses)
+        try {
+          const { data: storeData, error: storeError } = await supabase
+            .from('stores')
+            .select('*')
+            .eq('user_id', user.id)
+            .maybeSingle();
 
-        if (productsData) setProducts(productsData);
+          if (storeError) {
+            console.warn('[Admin loadUserData] Error al consultar store (controlado):', storeError.message || storeError);
+          }
+
+          if (storeData) {
+            setStore(storeData);
+            setStoreForm({
+              slug: storeData.slug,
+              name: storeData.name,
+              logo_url: storeData.logo_url || '',
+              whatsapp_number: storeData.whatsapp_number,
+              yape_number: storeData.yape_number,
+              theme_color: storeData.theme_color || '#dc2626',
+            });
+
+            // Cargar productos
+            try {
+              const { data: productsData, error: productsError } = await supabase
+                .from('products')
+                .select('*')
+                .eq('store_id', storeData.id)
+                .order('created_at', { ascending: false });
+
+              if (productsError) {
+                console.warn('[Admin loadUserData] Error al consultar products:', productsError.message || productsError);
+              }
+              if (productsData) setProducts(productsData);
+            } catch (prodCatchErr) {
+              console.warn('[Admin loadUserData] Excepción en products manejada:', prodCatchErr);
+            }
+          }
+        } catch (storeCatchErr) {
+          console.warn('[Admin loadUserData] Excepción en store manejada defensivamente:', storeCatchErr);
+        }
       }
+    } catch (globalAdminErr) {
+      console.warn('[Admin loadUserData] Error global manejado defensivamente:', globalAdminErr);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   }, [router, supabase]);
 
   useEffect(() => {
