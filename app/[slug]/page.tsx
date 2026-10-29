@@ -9,6 +9,33 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
+export async function generateMetadata({ params }: PageProps) {
+  try {
+    const { slug } = await params;
+    const supabase = await createClient();
+    const { data: store } = await supabase
+      .from('stores')
+      .select('name')
+      .eq('slug', slug)
+      .maybeSingle();
+
+    if (!store) {
+      return {
+        title: 'Catálogo | Feria Digital',
+      };
+    }
+
+    return {
+      title: `${store.name} | Catálogo Oficial`,
+      description: `Explora los productos de ${store.name} y haz tu pedido directo a WhatsApp.`,
+    };
+  } catch {
+    return {
+      title: 'Catálogo | Feria Digital',
+    };
+  }
+}
+
 export default async function CatalogPage({ params }: PageProps) {
   const { slug } = await params;
   const supabase = await createClient();
