@@ -9,7 +9,7 @@ import { createClient } from '@/lib/supabase/client';
 import { createStoreAction } from '@/app/admin/actions';
 import CloudinaryUpload from '@/components/CloudinaryUpload';
 import MultiImageUpload from '@/components/MultiImageUpload';
-import { deleteProductAction } from '@/app/admin/actions';
+import { deleteProductAction, deleteStoreAction } from '@/app/admin/actions';
 import {
   Store,
   Package,
@@ -92,6 +92,8 @@ export default function AdminPage() {
   const [editForm, setEditForm] = useState({ name: '', slug: '', whatsapp_number: '', yape_number: '', theme_color: '#dc2626', logo_url: '' })
   const [savingEdit, setSavingEdit] = useState(false)
   const [editMessage, setEditMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null)
+  const [deletingStore, setDeletingStore] = useState<StoreData | null>(null)
+  const [isDeletingStore, setIsDeletingStore] = useState(false)
 
   // Formulario de Super Admin para Crear Tienda + Usuario
   const [adminCreateStoreForm, setAdminCreateStoreForm] = useState({
@@ -511,6 +513,25 @@ export default function AdminPage() {
     setSavingEdit(false);
   };
 
+  const handleConfirmDeleteStore = async () => {
+    if (!deletingStore) return;
+    setIsDeletingStore(true);
+    try {
+      const res = await deleteStoreAction(deletingStore.id);
+      if (!res.success) {
+        throw new Error(res.error || 'Error al eliminar el negocio.');
+      }
+      setAllStores((prev) => prev.filter((s) => s.id !== deletingStore.id));
+      setMessage({ text: `Negocio "${deletingStore.name}" y todo su contenido fueron eliminados correctamente.`, type: 'success' });
+      setDeletingStore(null);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error al eliminar negocio.';
+      setMessage({ text: msg, type: 'error' });
+    } finally {
+      setIsDeletingStore(false);
+    }
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push('/login');
@@ -872,23 +893,32 @@ export default function AdminPage() {
                         </div>
                       </div>
 
-                      <div className="mt-4 pt-3 border-t border-gray-100 flex items-center gap-2">
+                      <div className="mt-4 pt-3 border-t border-gray-100 flex items-center gap-1.5">
                         <a
                           href={`/${item.slug}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="flex-1 inline-flex items-center justify-center gap-1.5 text-xs font-bold text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-xl transition"
+                          className="flex-1 inline-flex items-center justify-center gap-1 text-xs font-bold text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-2 py-2 rounded-xl transition"
                         >
                           <ExternalLink className="w-3.5 h-3.5" />
-                          Ver Catálogo
+                          <span>Ver</span>
                         </a>
                         <button
                           type="button"
                           onClick={() => handleOpenEdit(item)}
-                          className="flex-1 inline-flex items-center justify-center gap-1.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 px-3 py-2 rounded-xl transition shadow-sm"
+                          className="flex-1 inline-flex items-center justify-center gap-1 text-xs font-bold text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-2 py-2 rounded-xl transition"
                         >
                           <Pencil className="w-3.5 h-3.5" />
-                          Editar
+                          <span>Editar</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeletingStore(item)}
+                          className="inline-flex items-center justify-center gap-1 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 px-2.5 py-2 rounded-xl transition"
+                          title="Eliminar Negocio y Contenido"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Eliminar</span>
                         </button>
                       </div>
                     </div>
@@ -982,6 +1012,56 @@ export default function AdminPage() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de Confirmación para Eliminar Negocio */}
+        {deletingStore && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4"
+            onClick={(e) => { if (e.target === e.currentTarget && !isDeletingStore) setDeletingStore(null); }}
+          >
+            <div className="w-full max-w-sm bg-white rounded-2xl p-6 shadow-2xl animate-in zoom-in-95 duration-200 space-y-4">
+              <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <div className="text-center">
+                <h3 className="text-base font-bold text-gray-900">¿Eliminar este negocio?</h3>
+                <p className="text-xs text-gray-500 mt-2">
+                  ¿Estás seguro de que deseas eliminar permanentemente a <strong className="text-gray-900 font-bold">&quot;{deletingStore.name}&quot;</strong>?
+                </p>
+                <div className="mt-3 p-2.5 bg-red-50 border border-red-200 rounded-xl text-left text-xs text-red-700 space-y-1">
+                  <p className="font-semibold text-red-800 flex items-center gap-1">
+                    <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
+                    Esta acción eliminará:
+                  </p>
+                  <ul className="list-disc list-inside space-y-0.5 text-[11px] text-red-600 pl-1">
+                    <li>La tienda y su catálogo público</li>
+                    <li>Todos los productos y fotos</li>
+                    <li>La cuenta de acceso del dueño</li>
+                  </ul>
+                </div>
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  disabled={isDeletingStore}
+                  onClick={() => setDeletingStore(null)}
+                  className="flex-1 py-2 px-3 rounded-xl border border-gray-300 text-xs font-bold text-gray-700 hover:bg-gray-50 transition disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  disabled={isDeletingStore}
+                  onClick={handleConfirmDeleteStore}
+                  className="flex-1 py-2 px-3 rounded-xl bg-red-600 hover:bg-red-700 text-xs font-bold text-white transition flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50"
+                >
+                  {isDeletingStore ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                  Eliminar Todo
+                </button>
+              </div>
             </div>
           </div>
         )}

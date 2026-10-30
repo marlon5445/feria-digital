@@ -340,3 +340,87 @@ export async function deleteProductAction(productId: string): Promise<{ success:
     return { success: false, error: msg };
   }
 }
+
+// ─── deleteStoreAction ─────────────────────────────────────────────────────
+export async function deleteStoreAction(storeId: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    if (!storeId) {
+      return { success: false, error: 'ID de negocio no proporcionado.' };
+    }
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
+    if (!serviceRoleKey || serviceRoleKey.includes('placeholder')) {
+      return { success: false, error: 'Error de configuración: SUPABASE_SERVICE_ROLE_KEY no configurada.' };
+    }
+
+    // Verificar que quien llama es admin
+    const serverSupabase = await createSupabaseServerClient();
+    const { data: { user } } = await serverSupabase.auth.getUser();
+    if (!user) return { success: false, error: 'No autorizado.' };
+
+    const isAdmin =
+      user.user_metadata?.role === 'admin' ||
+      user.app_metadata?.role === 'admin' ||
+      user.email === 'admin@feriadigital.pe';
+
+    if (!isAdmin) {
+      const { data: profile } = await serverSupabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (profile?.role !== 'admin' && profile?.role !== 'super_admin') {
+        return { success: false, error: 'Permiso denegado: solo administradores pueden eliminar negocios.' };
+      }
+    }
+
+    // Usar service_role para eliminar en cascada (products → store → auth user)
+    const { createClient: createAdminClient } = await import('@supabase/supabase-js');
+    const supabaseAdmin = createAdminClient(supabaseUrl, serviceRoleKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    // Obtener el user_id de la tienda antes de eliminar
+    const { data: storeData, error: storeErr } = await supabaseAdmin
+      .from('stores')
+      .select('user_id')
+      .eq('id', storeId)
+      .maybeSingle();
+
+    if (storeErr || !storeData) {
+      return { success: false, error: 'No se encontró el negocio especificado.' };
+    }
+
+    const ownerId = storeData.user_id;
+
+    // 1. Eliminar todos los productos (CASCADE debería hacerlo, pero lo hacemos explícito)
+    await supabaseAdmin.from('products').delete().eq('store_id', storeId);
+
+    // 2. Eliminar la tienda
+    const { error: deleteStoreError } = await supabaseAdmin
+      .from('stores')
+      .delete()
+      .eq('id', storeId);
+
+    if (deleteStoreError) {
+      return { success: false, error: `Error al eliminar la tienda: ${deleteStoreError.message}` };
+    }
+
+    // 3. Eliminar el perfil del dueño
+    await supabaseAdmin.from('profiles').delete().eq('id', ownerId);
+
+    // 4. Eliminar el usuario de auth (esto también elimina el perfil por CASCADE)
+    const { error: deleteUserError } = await supabaseAdmin.auth.admin.deleteUser(ownerId);
+    if (deleteUserError) {
+      console.warn('[deleteStoreAction] No se pudo eliminar el usuario auth:', deleteUserError.message);
+      // No retornamos error aquí — la tienda ya fue eliminada
+    }
+
+    return { success: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Error inesperado al eliminar el negocio.';
+    return { success: false, error: msg };
+  }
+}
