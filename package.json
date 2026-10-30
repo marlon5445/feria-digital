@@ -32,5 +32,11 @@
     "postcss": "^8.5.32",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "allowScripts": {
+    "pg@8.23.1": true,
+    "esbuild@0.15.18": true,
+    "unrs-resolver@1.12.2": true,
+    "workerd@1.20250718.0": true
   }
 }
