@@ -519,7 +519,8 @@ export default function AdminPage() {
 
   const copyCredentialsToClipboard = () => {
     if (!newStoreModalResult) return;
-    const text = `🎉 ¡Hola! Tu catálogo digital en Feria Digital ha sido creado.\n\n🔗 Catálogo Público: https://feriadigital.pe/${newStoreModalResult.store.slug}\n🔑 Panel de Control: https://feriadigital.pe/login\n📧 Usuario / Correo: ${newStoreModalResult.owner.email}\n🔒 Contraseña Temporal: ${newStoreModalResult.owner.temporary_password}\n\nInicia sesión para subir tus productos y personalizar tu catálogo.`;
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://feria-digital.pages.dev';
+    const text = `🎉 ¡Hola! Tu catálogo digital en Feria Digital ha sido creado.\n\n🔗 Catálogo Público: ${baseUrl}/${newStoreModalResult.store.slug}\n🔑 Panel de Control: ${baseUrl}/login\n📧 Usuario / Correo: ${newStoreModalResult.owner.email}\n🔒 Contraseña Temporal: ${newStoreModalResult.owner.temporary_password}\n\nInicia sesión para subir tus productos y personalizar tu catálogo.`;
     navigator.clipboard.writeText(text);
     setCopiedKey(true);
     setTimeout(() => setCopiedKey(false), 2500);
