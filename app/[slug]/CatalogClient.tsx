@@ -141,8 +141,9 @@ export default function CatalogClient({
   const totalPrice = getTotalPrice();
 
   // Enlace directo a WhatsApp oficial
-  const cleanPhone = (store.whatsapp_number || '').replace(/\D/g, '');
-  const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
+  const rawPhone = (store.whatsapp_number || '').replace(/\D/g, '');
+  const cleanPhone = rawPhone.length === 9 ? `51${rawPhone}` : rawPhone;
+  const whatsappUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(
     `¡Hola ${store.name}! Vi tu catálogo en línea y me gustaría consultar sobre tus productos.`
   )}`;
 

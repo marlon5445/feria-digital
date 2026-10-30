@@ -202,7 +202,7 @@ export default function CartClient({ store }: { store: Store }) {
     },
   ];
 
-  // ── Construcción del mensaje de WhatsApp ────────────────────────────────
+  // ─── Construcción del mensaje de WhatsApp ──────────────────────────────────
   const handleSendOrder = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -215,41 +215,46 @@ export default function CartClient({ store }: { store: Store }) {
       return;
     }
 
-    let message = `🛒 *NUEVO PEDIDO — ${store.name.toUpperCase()}*\n\n`;
-    message += `👤 *Cliente:* ${customerName}\n`;
-    message += `📦 *Entrega:* ${deliveryType === 'delivery' ? 'Envío a Domicilio' : 'Recojo en Tienda'}\n`;
-    if (deliveryType === 'delivery' && address.trim()) {
-      message += `📍 *Dirección:* ${address}\n`;
+    const modalidadEntrega = deliveryType === 'delivery' ? 'Envío a Domicilio' : 'Recojo en Tienda';
+    const direccionReferencia = deliveryType === 'delivery'
+      ? (address.trim() || 'Coordinar por WhatsApp')
+      : 'Recojo en tienda';
+
+    const paymentLabel = PAYMENT_LABELS[paymentMethod] || 'Yape / Plin';
+    const metodoPago = paymentMethod === 'yape' && yapeOperationCode.trim()
+      ? `${paymentLabel} (Nº Op: ${yapeOperationCode.trim()})`
+      : paymentLabel;
+
+    const itemsDetail = items
+      .map(
+        (item) =>
+          `• [${item.category || 'General'}] ${item.name} x${item.quantity} - S/ ${(item.price * item.quantity).toFixed(2)}`
+      )
+      .join('\n');
+
+    const totalMonto = totalPrice.toFixed(2);
+
+    let mensajeTexto = `🛍️ *NUEVO PEDIDO — ${store.name}*\n\n`;
+    mensajeTexto += `👤 *Cliente:* ${customerName}\n`;
+    mensajeTexto += `🛵 *Entrega:* ${modalidadEntrega}\n`;
+    mensajeTexto += `📍 *Dirección:* ${direccionReferencia}\n`;
+    mensajeTexto += `💳 *Método de Pago:* ${metodoPago}\n\n`;
+    mensajeTexto += `📦 *DETALLE DEL PEDIDO:*\n`;
+    mensajeTexto += `${itemsDetail}\n\n`;
+    mensajeTexto += `💰 *TOTAL A PAGAR: S/ ${totalMonto}*\n`;
+
+    if (store.yape_number) {
+      mensajeTexto += `\n📱 *Pago por Yape/Plin al:* ${store.yape_number}\n`;
+      mensajeTexto += `_(Adjunto captura de pago a continuación)_\n`;
     }
 
-    // Método de pago
-    message += `💳 *Método de Pago:* ${PAYMENT_LABELS[paymentMethod]}\n`;
-    if (paymentMethod === 'yape' && yapeOperationCode.trim()) {
-      message += `🔢 *N° Operación Yape/Plin:* ${yapeOperationCode}\n`;
-    }
+    mensajeTexto += `\n_Enviado desde el catálogo digital de ${store.name}._`;
 
-    message += `\n🛍️ *DETALLE DEL PEDIDO:*\n`;
-    items.forEach((item) => {
-      const subtotal = item.price * item.quantity;
-      const categoryTag = item.category ? `[${item.category}] ` : "";
-      message += `• ${categoryTag}${item.name} x${item.quantity} - S/ ${subtotal.toFixed(2)}\n`;
-    });
-
-    message += `\n💰 *TOTAL A PAGAR: S/ ${totalPrice.toFixed(2)}*\n`;
-
-    if (paymentMethod === 'yape') {
-      message += `\n📱 Pago por Yape/Plin al: *${store.yape_number}*\n`;
-      if (!yapeOperationCode.trim()) {
-        message += `_(Adjunto captura de pago a continuación)_\n`;
-      }
-    }
-
-    message += `\n_Enviado desde el catálogo digital de ${store.name}._`;
-
-    const whatsappUrl = `https://wa.me/${(store.whatsapp_number || '').replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+    const rawPhone = (store.whatsapp_number || '').replace(/\D/g, '');
+    const cleanPhone = rawPhone.length === 9 ? `51${rawPhone}` : rawPhone;
+    const whatsappUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(mensajeTexto)}`;
     window.open(whatsappUrl, '_blank');
   };
-
   // ── Carrito vacío ───────────────────────────────────────────────────────
   if (items.length === 0) {
     return (
