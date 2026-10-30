@@ -1216,10 +1216,10 @@ export default function AdminPage() {
               </div>
 
               <div className="md:col-span-2">
-                <CloudinaryUpload
-                  label="Imagen del Producto"
-                  currentImageUrl={productForm.image_url}
-                  onUploadSuccess={(url) => setProductForm({ ...productForm, image_url: url })}
+                <MultiImageUpload
+                  label="Fotos del Producto (Galería)"
+                  images={productForm.images}
+                  onChange={(imgs) => setProductForm({ ...productForm, images: imgs, image_url: imgs[0] || "" })}
                 />
               </div>
             </div>
