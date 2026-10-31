@@ -241,14 +241,7 @@ export default function CartClient({ store }: { store: Store }) {
     mensajeTexto += `💳 *Método de Pago:* ${metodoPago}\n\n`;
     mensajeTexto += `📦 *DETALLE DEL PEDIDO:*\n`;
     mensajeTexto += `${itemsDetail}\n\n`;
-    mensajeTexto += `💰 *TOTAL A PAGAR: S/ ${totalMonto}*\n`;
-
-    if (store.yape_number) {
-      mensajeTexto += `\n📱 *Pago por Yape/Plin al:* ${store.yape_number}\n`;
-      mensajeTexto += `_(Adjunto captura de pago a continuación)_\n`;
-    }
-
-    mensajeTexto += `\n_Enviado desde el catálogo digital de ${store.name}._`;
+    mensajeTexto += `💰 *TOTAL A PAGAR: S/ ${totalMonto}*`;
 
     const rawPhone = (store.whatsapp_number || '').replace(/\D/g, '');
     const cleanPhone = rawPhone.length === 9 ? `51${rawPhone}` : rawPhone;
