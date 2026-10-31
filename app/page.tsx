@@ -46,7 +46,7 @@ export default function HomePage() {
     },
     {
       q: '¿Cómo comparto mi tienda virtual con mis clientes?',
-      a: 'Recibes un enlace corto y exclusivo (ej: feriadigital.pe/tu-tienda) que puedes colocar en tu biografía de Instagram, TikTok, Facebook o compartir en tus estados de WhatsApp.',
+      a: 'Recibes un enlace corto y exclusivo (ej: feria-digital.pages.dev/tu-tienda) que puedes colocar en tu biografía de Instagram, TikTok, Facebook o compartir en tus estados de WhatsApp.',
     },
   ];
 
@@ -635,12 +635,12 @@ export default function HomePage() {
       </section>
 
       {/* ─── 7. CTA BANNER PRE-FOOTER (CANALIZADO A WHATSAPP) ──────────────── */}
-      <section className="bg-gradient-to-r from-red-600 to-rose-600 text-white py-16">
-        <div className="max-w-4xl mx-auto px-4 text-center space-y-6">
-          <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+        <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white rounded-3xl my-12 p-8 md:p-14 shadow-2xl border border-slate-700/50 text-center space-y-6">
+          <h2 className="text-white font-extrabold text-2xl md:text-4xl tracking-tight">
             ¿Listo para tener tu Tienda Virtual profesional?
           </h2>
-          <p className="text-red-100 text-base max-w-xl mx-auto">
+          <p className="text-slate-300 text-base md:text-lg max-w-xl mx-auto">
             Escríbenos directamente a WhatsApp y te ayudamos a configurar tu e-commerce en minutos.
           </p>
           <div className="pt-2">
@@ -648,7 +648,7 @@ export default function HomePage() {
               href={HERO_WA_URL}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-2.5 px-9 py-4 rounded-2xl bg-white text-red-600 font-black text-base shadow-xl hover:bg-slate-50 transition transform hover:-translate-y-0.5 active:scale-95"
+              className="inline-flex items-center gap-2.5 px-8 py-4 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-base shadow-lg shadow-emerald-500/25 transition-all transform hover:scale-105 active:scale-95"
             >
               <MessageCircle className="w-5 h-5 fill-current" />
               <span>Solicitar mi Tienda Virtual</span>
