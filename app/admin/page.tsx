@@ -4,7 +4,8 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'edge';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import {
+  useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { createStoreAction } from '@/app/admin/actions';
 import CloudinaryUpload from '@/components/CloudinaryUpload';
@@ -30,6 +31,9 @@ import {
   Search,
   Pencil,
   X,
+  LayoutGrid,
+  List,
+  Tag,
 } from 'lucide-react';
 
 interface StoreData {
@@ -124,7 +128,7 @@ export default function AdminPage() {
     price: '',
     image_url: '',
     images: [] as string[],
-    category: 'General',
+    category: '',
   });
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -136,9 +140,41 @@ export default function AdminPage() {
     price: '',
     image_url: '',
     images: [] as string[],
-    category: 'General',
+    category: '',
   });
   const [savingEditProduct, setSavingEditProduct] = useState(false);
+
+  // Conmutadores de Vista (Grid vs. Lista)
+  const [storeViewMode, setStoreViewMode] = useState<'grid' | 'list'>('grid');
+  const [productViewMode, setProductViewMode] = useState<'grid' | 'list'>('grid');
+
+  // Gestión de Categorías
+  const [showCategoryManager, setShowCategoryManager] = useState(false);
+  const [renamingCategory, setRenamingCategory] = useState<string | null>(null);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [isRenamingCategory, setIsRenamingCategory] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
+  const [reassignCategory, setReassignCategory] = useState<string>('');
+  const [isDeletingCategory, setIsDeletingCategory] = useState(false);
+
+  // Categorías existentes derivadas de los productos
+  const existingCategories = React.useMemo(() => {
+    const set = new Set<string>();
+    products.forEach((p) => {
+      const cat = (p.category || '').trim();
+      if (cat) set.add(cat);
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [products]);
+
+  const categoryCounts = React.useMemo(() => {
+    const map: Record<string, number> = {};
+    products.forEach((p) => {
+      const cat = (p.category || '').trim() || 'Sin categoría';
+      map[cat] = (map[cat] || 0) + 1;
+    });
+    return map;
+  }, [products]);
 
   const loadUserData = useCallback(async () => {
     setLoading(true);
@@ -360,7 +396,7 @@ export default function AdminPage() {
         price: parseFloat(productForm.price),
         image_url: (productForm.images.length > 0 ? productForm.images[0] : productForm.image_url) || null,
         images: productForm.images || [],
-        category: productForm.category || 'General',
+        category: productForm.category.trim() || 'General',
         is_active: true,
       })
       .select()
@@ -376,7 +412,7 @@ export default function AdminPage() {
         price: '',
         image_url: '',
         images: [],
-        category: 'General',
+        category: '',
       });
       setMessage({ text: '¡Producto añadido correctamente!', type: 'success' });
     }
@@ -392,7 +428,7 @@ export default function AdminPage() {
       price: prod.price.toString(),
       image_url: prod.image_url || '',
       images: prodImages,
-      category: prod.category || 'General',
+      category: prod.category || '',
     });
   };
 
@@ -529,6 +565,71 @@ export default function AdminPage() {
       setMessage({ text: msg, type: 'error' });
     } finally {
       setIsDeletingStore(false);
+    }
+  };
+
+  // Handlers para Gestión de Categorías
+  const handleRenameCategory = async (oldName: string, newName: string) => {
+    if (!store) return;
+    const trimmed = newName.trim();
+    if (!trimmed || trimmed.toLowerCase() === oldName.toLowerCase()) {
+      setRenamingCategory(null);
+      return;
+    }
+    setIsRenamingCategory(true);
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({ category: trimmed })
+        .eq('store_id', store.id)
+        .eq('category', oldName);
+
+      if (error) throw error;
+
+      setProducts((prev) =>
+        prev.map((p) => (p.category === oldName ? { ...p, category: trimmed } : p))
+      );
+      setMessage({
+        text: `Categoría "${oldName}" renombrada a "${trimmed}" en todos los productos asociados.`,
+        type: 'success',
+      });
+      setRenamingCategory(null);
+      setNewCategoryName('');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error al renombrar categoría.';
+      setMessage({ text: msg, type: 'error' });
+    } finally {
+      setIsRenamingCategory(false);
+    }
+  };
+
+  const handleConfirmDeleteCategory = async (catToDelete: string, targetCat: string) => {
+    if (!store) return;
+    setIsDeletingCategory(true);
+    try {
+      const target = targetCat.trim() || 'General';
+      const { error } = await supabase
+        .from('products')
+        .update({ category: target })
+        .eq('store_id', store.id)
+        .eq('category', catToDelete);
+
+      if (error) throw error;
+
+      setProducts((prev) =>
+        prev.map((p) => (p.category === catToDelete ? { ...p, category: target } : p))
+      );
+      setMessage({
+        text: `Categoría "${catToDelete}" eliminada. Sus productos fueron reasignados a "${target}".`,
+        type: 'success',
+      });
+      setCategoryToDelete(null);
+      setReassignCategory('');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error al eliminar categoría.';
+      setMessage({ text: msg, type: 'error' });
+    } finally {
+      setIsDeletingCategory(false);
     }
   };
 
@@ -804,21 +905,50 @@ export default function AdminPage() {
                 <Users className="w-5 h-5 mr-2 text-red-600" />
                 Negocios Registrados ({allStores.length})
               </h2>
-              {/* Buscador en tiempo real */}
-              <div className="relative w-full sm:max-w-xs">
-                <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Buscar por nombre, slug, WhatsApp..."
-                  className="w-full pl-9 pr-9 py-2 text-sm border border-gray-300 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent focus:bg-white transition"
-                />
-                {searchTerm && (
-                  <button onClick={() => setSearchTerm('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700">
-                    <X className="w-4 h-4" />
+              <div className="flex items-center gap-2.5 w-full sm:w-auto">
+                {/* Buscador en tiempo real */}
+                <div className="relative flex-1 sm:w-72">
+                  <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Buscar por nombre, slug, WhatsApp..."
+                    className="w-full pl-9 pr-9 py-2 text-sm border border-gray-300 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent focus:bg-white transition"
+                  />
+                  {searchTerm && (
+                    <button onClick={() => setSearchTerm('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700">
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+                {/* Selector de Vista Grid / Lista Compacta */}
+                <div className="flex items-center bg-gray-100 p-1 rounded-xl border border-gray-200 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setStoreViewMode('grid')}
+                    className={`p-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition ${
+                      storeViewMode === 'grid'
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                    title="Vista Cuadrícula"
+                  >
+                    <LayoutGrid className="w-4 h-4" />
                   </button>
-                )}
+                  <button
+                    type="button"
+                    onClick={() => setStoreViewMode('list')}
+                    className={`p-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition ${
+                      storeViewMode === 'list'
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                    title="Vista Lista Compacta"
+                  >
+                    <List className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -849,6 +979,94 @@ export default function AdminPage() {
                     <button onClick={() => setSearchTerm('')} className="mt-3 text-sm text-red-600 hover:underline font-semibold">
                       Limpiar filtro
                     </button>
+                  </div>
+                );
+              }
+
+              if (storeViewMode === 'list') {
+                return (
+                  <div className="overflow-x-auto border border-gray-200 rounded-2xl bg-white shadow-xs">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="border-b border-gray-200 text-gray-500 font-semibold uppercase bg-gray-50">
+                          <th className="py-3 px-4">Negocio</th>
+                          <th className="py-3 px-4">Enlace Slug</th>
+                          <th className="py-3 px-4">WhatsApp / Yape</th>
+                          <th className="py-3 px-4 text-center">Color</th>
+                          <th className="py-3 px-4 text-right">Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {filtered.map((item) => (
+                          <tr key={item.id} className="hover:bg-gray-50/80 transition">
+                            <td className="py-3 px-4">
+                              <div className="flex items-center gap-3">
+                                {item.logo_url ? (
+                                  <img
+                                    src={item.logo_url}
+                                    alt={item.name}
+                                    className="w-10 h-10 rounded-xl object-contain border border-gray-200 p-0.5 shrink-0 bg-white shadow-xs"
+                                  />
+                                ) : (
+                                  <div
+                                    className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-xs"
+                                    style={{ backgroundColor: item.theme_color || '#dc2626' }}
+                                  >
+                                    {item.name.charAt(0).toUpperCase()}
+                                  </div>
+                                )}
+                                <div>
+                                  <span className="font-bold text-gray-900 text-sm leading-tight block">{item.name}</span>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-3 px-4 font-mono text-red-600 font-semibold">
+                              /{item.slug}
+                            </td>
+                            <td className="py-3 px-4 text-gray-600 space-y-0.5">
+                              <div><span className="text-gray-400 font-sans">WA:</span> {item.whatsapp_number}</div>
+                              <div><span className="text-gray-400 font-sans">Yape:</span> {item.yape_number}</div>
+                            </td>
+                            <td className="py-3 px-4 text-center">
+                              <div className="inline-flex items-center gap-1.5 font-mono text-xs text-gray-500">
+                                <span className="w-3.5 h-3.5 rounded-full border border-gray-300" style={{ backgroundColor: item.theme_color }} />
+                                <span>{item.theme_color}</span>
+                              </div>
+                            </td>
+                            <td className="py-3 px-4 text-right">
+                              <div className="inline-flex items-center justify-end gap-1.5">
+                                <a
+                                  href={`/${item.slug}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex items-center gap-1 text-xs font-bold text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-2.5 py-1.5 rounded-lg transition"
+                                >
+                                  <ExternalLink className="w-3.5 h-3.5" />
+                                  <span>Ver</span>
+                                </a>
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenEdit(item)}
+                                  className="inline-flex items-center gap-1 text-xs font-bold text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-2.5 py-1.5 rounded-lg transition"
+                                >
+                                  <Pencil className="w-3.5 h-3.5" />
+                                  <span>Editar</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setDeletingStore(item)}
+                                  className="inline-flex items-center gap-1 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 px-2.5 py-1.5 rounded-lg transition"
+                                  title="Eliminar Negocio y Contenido"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                  <span>Eliminar</span>
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 );
               }
@@ -1274,15 +1492,30 @@ export default function AdminPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Categoría</label>
+                <div className="flex items-center justify-between">
+                  <label className="block text-sm font-medium text-gray-700">Categoría</label>
+                  <button
+                    type="button"
+                    onClick={() => setShowCategoryManager(true)}
+                    className="inline-flex items-center gap-1 text-xs text-purple-700 hover:text-purple-900 font-semibold transition"
+                  >
+                    <Tag className="w-3.5 h-3.5" />
+                    <span>Gestionar Categorías</span>
+                  </button>
+                </div>
                 <input
                   type="text"
-                  required
+                  list="store-categories-list"
                   value={productForm.category}
                   onChange={(e) => setProductForm({ ...productForm, category: e.target.value })}
-                  placeholder="Ej: Canastas, Chocolatería, Decoración"
+                  placeholder="Escribe una categoría nueva (ej: Postres) o selecciona una existente"
                   className="mt-1 block w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-red-500 focus:border-red-500"
                 />
+                <datalist id="store-categories-list">
+                  {existingCategories.map((cat) => (
+                    <option key={cat} value={cat} />
+                  ))}
+                </datalist>
               </div>
 
               <div>
@@ -1320,26 +1553,62 @@ export default function AdminPage() {
 
         {/* Sección: Lista de Productos */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sm:p-8">
-          {/* Header con buscador */}
+          {/* Header con buscador, gestión de categorías y toggle grid/list */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-            <h2 className="text-xl font-bold text-gray-900 flex items-center">
+            <h2 className="text-xl font-bold text-gray-900 flex items-center shrink-0">
               <Package className="w-5 h-5 mr-2 text-red-600" />
               Tus Productos Publicados ({products.length})
             </h2>
-            <div className="relative w-full sm:max-w-xs">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-              <input
-                type="text"
-                value={productSearchTerm}
-                onChange={(e) => setProductSearchTerm(e.target.value)}
-                placeholder="Buscar por nombre, categoría..."
-                className="w-full pl-9 pr-9 py-2 text-sm border border-gray-300 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition"
-              />
-              {productSearchTerm && (
-                <button onClick={() => setProductSearchTerm('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700">
-                  <X className="w-4 h-4" />
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 w-full sm:w-auto">
+              <button
+                type="button"
+                onClick={() => setShowCategoryManager(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-xl transition shadow-xs shrink-0"
+              >
+                <Tag className="w-3.5 h-3.5 text-purple-600" />
+                <span>Gestionar Categorías</span>
+              </button>
+              <div className="relative flex-1 sm:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                <input
+                  type="text"
+                  value={productSearchTerm}
+                  onChange={(e) => setProductSearchTerm(e.target.value)}
+                  placeholder="Buscar por nombre, categoría..."
+                  className="w-full pl-9 pr-9 py-2 text-sm border border-gray-300 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition"
+                />
+                {productSearchTerm && (
+                  <button onClick={() => setProductSearchTerm('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700">
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center bg-gray-100 p-1 rounded-xl border border-gray-200 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setProductViewMode('grid')}
+                  className={`p-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition ${
+                    productViewMode === 'grid'
+                      ? 'bg-white text-gray-900 shadow-sm'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                  title="Vista Cuadrícula"
+                >
+                  <LayoutGrid className="w-4 h-4" />
                 </button>
-              )}
+                <button
+                  type="button"
+                  onClick={() => setProductViewMode('list')}
+                  className={`p-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition ${
+                    productViewMode === 'list'
+                      ? 'bg-white text-gray-900 shadow-sm'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                  title="Vista Lista Compacta"
+                >
+                  <List className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -1363,6 +1632,108 @@ export default function AdminPage() {
                     </div>
                   );
                 }
+
+                if (productViewMode === 'list') {
+                  return (
+                    <div className="overflow-x-auto border border-gray-200 rounded-2xl bg-white shadow-xs">
+                      <table className="w-full text-left text-xs border-collapse">
+                        <thead>
+                          <tr className="border-b border-gray-200 text-gray-500 font-semibold uppercase bg-gray-50">
+                            <th className="py-3 px-4">Producto</th>
+                            <th className="py-3 px-4">Categoría</th>
+                            <th className="py-3 px-4">Precio</th>
+                            <th className="py-3 px-4 text-center">Estado</th>
+                            <th className="py-3 px-4 text-right">Acciones</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {filteredProds.map((product) => (
+                            <tr
+                              key={product.id}
+                              className={`hover:bg-gray-50/80 transition ${!product.is_active ? 'opacity-60 bg-gray-50/40' : ''}`}
+                            >
+                              <td className="py-2.5 px-4">
+                                <div className="flex items-center gap-3">
+                                  {product.image_url ? (
+                                    <img
+                                      src={product.image_url}
+                                      alt={product.name}
+                                      className="w-12 h-12 rounded-lg object-cover border border-gray-200 shrink-0"
+                                    />
+                                  ) : (
+                                    <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center text-[10px] text-gray-400 font-semibold shrink-0 border border-gray-200">
+                                      Sin foto
+                                    </div>
+                                  )}
+                                  <div className="min-w-0 max-w-xs md:max-w-md">
+                                    <p className="font-bold text-gray-900 text-sm truncate">{product.name}</p>
+                                    {product.description && (
+                                      <p className="text-[11px] text-gray-500 truncate">{product.description}</p>
+                                    )}
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="py-2.5 px-4 whitespace-nowrap">
+                                <span className="inline-block px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">
+                                  {product.category || 'General'}
+                                </span>
+                              </td>
+                              <td className="py-2.5 px-4 font-extrabold text-red-600 text-sm whitespace-nowrap">
+                                S/ {Number(product.price).toFixed(2)}
+                              </td>
+                              <td className="py-2.5 px-4 text-center whitespace-nowrap">
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleProductStatus(product)}
+                                  className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition ${
+                                    product.is_active
+                                      ? 'bg-green-50 text-green-700 hover:bg-green-100'
+                                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                  }`}
+                                >
+                                  {product.is_active ? (
+                                    <>
+                                      <Eye className="w-3.5 h-3.5 text-green-600" />
+                                      <span>Activo</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <EyeOff className="w-3.5 h-3.5 text-gray-400" />
+                                      <span>Oculto</span>
+                                    </>
+                                  )}
+                                </button>
+                              </td>
+                              <td className="py-2.5 px-4 text-right whitespace-nowrap">
+                                <div className="inline-flex items-center justify-end gap-1.5">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenEditProduct(product)}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 transition"
+                                    title="Editar producto"
+                                  >
+                                    <Pencil className="w-3.5 h-3.5" />
+                                    <span>Editar</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setDeletingProduct(product)}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 transition"
+                                    title="Eliminar producto"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                    <span>Eliminar</span>
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  );
+                }
+
                 return (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredProds.map((product) => (
@@ -1493,14 +1864,22 @@ export default function AdminPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">Categoría *</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-semibold text-gray-700">Categoría</label>
+                  </div>
                   <input
                     type="text"
-                    required
+                    list="store-categories-edit-list"
                     value={editingProductForm.category}
                     onChange={(e) => setEditingProductForm({ ...editingProductForm, category: e.target.value })}
+                    placeholder="Escribe una categoría nueva (ej: Postres) o selecciona una existente"
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
                   />
+                  <datalist id="store-categories-edit-list">
+                    {existingCategories.map((cat) => (
+                      <option key={cat} value={cat} />
+                    ))}
+                  </datalist>
                 </div>
 
                 <div className="sm:col-span-2">
@@ -1583,6 +1962,188 @@ export default function AdminPage() {
           </div>
         </div>
       )}
+      {/* Modal de Gestión de Categorías */}
+      {showCategoryManager && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !isRenamingCategory && !isDeletingCategory) {
+              setShowCategoryManager(false);
+              setRenamingCategory(null);
+              setCategoryToDelete(null);
+            }
+          }}
+        >
+          <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
+            <div className="flex items-center justify-between px-6 py-4 bg-purple-900 text-white">
+              <div className="flex items-center gap-2">
+                <Tag className="w-5 h-5 text-purple-300" />
+                <h2 className="font-bold text-base">Gestionar Categorías del Catálogo</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowCategoryManager(false);
+                  setRenamingCategory(null);
+                  setCategoryToDelete(null);
+                }}
+                className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 transition"
+                aria-label="Cerrar modal"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto space-y-4">
+              <p className="text-xs text-gray-500">
+                Administra, renombra o elimina categorías. Renombrar una categoría actualizará automáticamente todos los productos vinculados a ella.
+              </p>
+
+              {existingCategories.length === 0 ? (
+                <div className="text-center py-8 text-gray-400 text-xs">
+                  Aún no tienes categorías registradas en tus productos.
+                </div>
+              ) : (
+                <div className="divide-y divide-gray-100 border border-gray-200 rounded-xl overflow-hidden bg-gray-50/50">
+                  {existingCategories.map((cat) => {
+                    const count = categoryCounts[cat] || 0;
+                    const isEditing = renamingCategory === cat;
+                    const isDeletingThis = categoryToDelete === cat;
+
+                    return (
+                      <div key={cat} className="p-3 bg-white space-y-2">
+                        {isEditing ? (
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              value={newCategoryName}
+                              onChange={(e) => setNewCategoryName(e.target.value)}
+                              placeholder="Nuevo nombre de categoría"
+                              className="flex-1 border border-purple-300 rounded-lg px-2.5 py-1.5 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                              autoFocus
+                            />
+                            <button
+                              type="button"
+                              disabled={isRenamingCategory || !newCategoryName.trim()}
+                              onClick={() => handleRenameCategory(cat, newCategoryName)}
+                              className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition disabled:opacity-50"
+                            >
+                              {isRenamingCategory ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Guardar'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setRenamingCategory(null);
+                                setNewCategoryName('');
+                              }}
+                              className="px-2.5 py-1.5 border border-gray-300 text-gray-600 hover:bg-gray-100 rounded-lg text-xs font-semibold transition"
+                            >
+                              Cancelar
+                            </button>
+                          </div>
+                        ) : isDeletingThis ? (
+                          <div className="bg-red-50 border border-red-200 rounded-xl p-3 space-y-2">
+                            <p className="text-xs font-bold text-red-900">
+                              ¿Eliminar categoría &quot;{cat}&quot;?
+                            </p>
+                            <p className="text-[11px] text-red-700">
+                              Tiene {count} {count === 1 ? 'producto asociado' : 'productos asociados'}. Elige a qué categoría reasignarlos antes de borrar:
+                            </p>
+                            <div className="flex items-center gap-2">
+                              <select
+                                value={reassignCategory}
+                                onChange={(e) => setReassignCategory(e.target.value)}
+                                className="flex-1 bg-white border border-red-300 rounded-lg px-2 py-1.5 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-500"
+                              >
+                                <option value="General">Reasignar a &quot;General&quot;</option>
+                                <option value="Sin categoría">Reasignar a &quot;Sin categoría&quot;</option>
+                                {existingCategories
+                                  .filter((c) => c !== cat)
+                                  .map((c) => (
+                                    <option key={c} value={c}>
+                                      Reasignar a &quot;{c}&quot;
+                                    </option>
+                                  ))}
+                              </select>
+                              <button
+                                type="button"
+                                disabled={isDeletingCategory}
+                                onClick={() => handleConfirmDeleteCategory(cat, reassignCategory || 'General')}
+                                className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition disabled:opacity-50"
+                              >
+                                {isDeletingCategory ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Reasignar y Eliminar'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setCategoryToDelete(null)}
+                                className="px-2.5 py-1.5 border border-gray-300 text-gray-600 hover:bg-white rounded-lg text-xs font-semibold transition"
+                              >
+                                Cancelar
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-gray-900 text-xs">{cat}</span>
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700">
+                                {count} {count === 1 ? 'producto' : 'productos'}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setRenamingCategory(cat);
+                                  setNewCategoryName(cat);
+                                  setCategoryToDelete(null);
+                                }}
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold text-gray-700 hover:bg-gray-100 transition"
+                                title="Renombrar categoría"
+                              >
+                                <Pencil className="w-3.5 h-3.5 text-gray-500" />
+                                <span>Editar</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setCategoryToDelete(cat);
+                                  setReassignCategory('General');
+                                  setRenamingCategory(null);
+                                }}
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold text-red-600 hover:bg-red-50 transition"
+                                title="Eliminar categoría"
+                              >
+                                <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                                <span>Eliminar</span>
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowCategoryManager(false);
+                  setRenamingCategory(null);
+                  setCategoryToDelete(null);
+                }}
+                className="px-4 py-2 bg-gray-900 hover:bg-black text-white text-xs font-bold rounded-xl transition"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
