@@ -3,20 +3,25 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import {
-  Smartphone,
   MessageCircle,
-  Zap,
-  ArrowRight,
-  ExternalLink,
   QrCode,
   ShoppingBag,
-  Sparkles,
   ChevronDown,
   Check,
   Store,
   Flame,
   CheckCircle2,
 } from 'lucide-react';
+
+const WA_PHONE = '51986441292';
+
+const buildWaUrl = (message: string) =>
+  `https://api.whatsapp.com/send?phone=${WA_PHONE}&text=${encodeURIComponent(message)}`;
+
+const HERO_WA_URL = buildWaUrl('Hola, deseo más información para afiliarme y tener mi tienda virtual.');
+const PLAN_MENSUAL_WA_URL = buildWaUrl('Hola, me interesa afiliarme al Plan Mensual de S/ 30.');
+const PLAN_TRIMESTRAL_WA_URL = buildWaUrl('Hola, me interesa afiliarme al Plan Trimestral de S/ 70.');
+const PLAN_ANUAL_WA_URL = buildWaUrl('Hola, me interesa afiliarme al Plan Anual de S/ 200.');
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState<'catalog' | 'checkout' | 'whatsapp'>('catalog');
@@ -40,7 +45,7 @@ export default function HomePage() {
       a: 'No, tus clientes abren tu enlace al instante en cualquier navegador (Chrome, Safari, etc.) sin necesidad de registrarse ni instalar aplicaciones.',
     },
     {
-      q: '¿Cómo comparto mi catálogo con mis clientes?',
+      q: '¿Cómo comparto mi tienda virtual con mis clientes?',
       a: 'Recibes un enlace corto y exclusivo (ej: feriadigital.pe/tu-tienda) que puedes colocar en tu biografía de Instagram, TikTok, Facebook o compartir en tus estados de WhatsApp.',
     },
   ];
@@ -59,7 +64,7 @@ export default function HomePage() {
                 Feria<span className="text-red-600">Digital</span>
               </span>
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
-                Catálogos Virtuales
+                Tiendas Virtuales E-commerce
               </span>
             </div>
           </Link>
@@ -86,60 +91,55 @@ export default function HomePage() {
             >
               Iniciar Sesión
             </Link>
-            <Link
-              href="/admin"
+            <a
+              href={HERO_WA_URL}
+              target="_blank"
+              rel="noreferrer"
               className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-white bg-red-600 hover:bg-red-700 px-4 py-2.5 rounded-xl shadow-md shadow-red-600/20 hover:shadow-red-600/30 transition transform active:scale-95"
             >
-              <Sparkles className="w-4 h-4" />
-              <span>Crear Tienda</span>
-            </Link>
+              <MessageCircle className="w-4 h-4" />
+              <span>Solicitar Tienda</span>
+            </a>
           </div>
         </div>
       </header>
 
-      {/* ─── 2. HERO SECTION ──────────────────────────────────────────────── */}
+      {/* ─── 2. HERO SECTION DE ALTO IMPACTO ──────────────────────────────── */}
       <section className="relative overflow-hidden pt-12 pb-20 md:pt-20 md:pb-32 bg-gradient-to-b from-white via-red-50/30 to-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto space-y-6">
-            {/* Badge de Plataforma #1 */}
+          <div className="text-center max-w-4xl mx-auto space-y-6">
+            {/* Badge Superior */}
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold bg-red-100/80 text-red-700 border border-red-200/60 shadow-xs">
               <span className="flex h-2 w-2 rounded-full bg-red-600 animate-ping" />
-              <span>⚡ La plataforma de catálogos virtuales #1 para emprendedores peruanos</span>
+              <span>⚡ Tu Tienda Virtual E-commerce lista en minutos</span>
             </div>
 
             {/* Título Principal */}
-            <h1 className="text-4xl sm:text-6xl font-black text-slate-900 tracking-tight leading-[1.12]">
-              Tu Tienda Virtual en{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 via-rose-600 to-purple-600">
-                WhatsApp & Yape
-              </span>{' '}
-              en menos de 5 minutos
+            <h1 className="text-4xl sm:text-6xl font-black text-slate-900 tracking-tight leading-[1.14]">
+              La Tienda Virtual Profesional que tu negocio necesita{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 via-rose-600 to-purple-600 block sm:inline">
+                (Sin Comisiones ni Costos Excesivos)
+              </span>
             </h1>
 
             {/* Subtítulo */}
-            <p className="text-base sm:text-xl text-slate-600 leading-relaxed max-w-2xl mx-auto font-normal">
-              Sin comisiones por venta. Comparte tu catálogo profesional por Instagram, TikTok o Facebook y recibe
-              pedidos organizados con comprobante de Yape directo a tu chat.
+            <p className="text-base sm:text-xl text-slate-600 leading-relaxed max-w-3xl mx-auto font-normal">
+              Obtén un e-commerce completo con tu propio link personalizado, catálogo con carrito de compras
+              interactivo y gestión de pagos con Yape/Plin. La potencia de WooCommerce o Shopify a una fracción del
+              precio y sin pagar mensualidades caras.
             </p>
 
-            {/* Botones de Acción (CTAs) */}
+            {/* Botón de Acción Principal (Hero CTA WhatsApp) */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-4">
-              <Link
-                href="/login"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl text-base font-black text-white bg-red-600 hover:bg-red-700 shadow-xl shadow-red-600/25 hover:shadow-red-600/40 hover:-translate-y-0.5 transition-all"
-              >
-                <span>Crear mi Tienda Ahora</span>
-                <ArrowRight className="w-5 h-5" />
-              </Link>
-              <Link
-                href="/detallitos-gourmet"
+              <a
+                href={HERO_WA_URL}
                 target="_blank"
                 rel="noreferrer"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl text-base font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300/80 shadow-sm transition"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-9 py-4 rounded-2xl text-base font-black text-white bg-red-600 hover:bg-red-700 shadow-xl shadow-red-600/25 hover:shadow-red-600/40 hover:-translate-y-0.5 transition-all"
               >
-                <span>Ver Demo en Vivo</span>
-                <ExternalLink className="w-4 h-4 text-slate-400" />
-              </Link>
+                <MessageCircle className="w-5 h-5 fill-current" />
+                <span>Solicitar mi Tienda Virtual</span>
+              </a>
             </div>
 
             {/* Trust Badges */}
@@ -151,7 +151,7 @@ export default function HomePage() {
                 <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Pagos directos a tu Yape/Plin
               </span>
               <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Listo en 5 minutos
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Sin costos excesivos
               </span>
             </div>
           </div>
@@ -221,7 +221,7 @@ export default function HomePage() {
                             </span>
                           </div>
                         </div>
-                        <span className="bg-white/20 text-[10px] font-bold px-2 py-1 rounded-lg">Demo</span>
+                        <span className="bg-white/20 text-[10px] font-bold px-2 py-1 rounded-lg">E-commerce</span>
                       </div>
 
                       {/* Lista de Productos Demo */}
@@ -427,31 +427,35 @@ export default function HomePage() {
       <section id="precios" className="py-20 sm:py-28 bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
-            <span className="text-xs font-bold text-red-600 uppercase tracking-widest">Inversión Inteligente</span>
+            <span className="text-xs font-bold text-red-600 uppercase tracking-widest">Inversión Accesible</span>
             <h2 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight">
               Planes Simples y Transparentes
             </h2>
             <p className="text-slate-600 text-sm sm:text-base">
-              Elige el plan que mejor se adapte al momento de tu negocio. Cancela o renueva cuando quieras.
+              Elige el plan ideal para tu negocio y comienza a recibir pedidos organizados hoy mismo.
             </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-5xl mx-auto items-stretch">
-            {/* PLAN 1: MENSUAL */}
+            {/* a) PLAN MENSUAL */}
             <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm flex flex-col justify-between hover:border-slate-300 transition">
               <div className="space-y-6">
                 <div>
                   <h3 className="text-xl font-black text-slate-900">Plan Mensual</h3>
-                  <p className="text-xs text-slate-500 mt-1">Ideal para probar la plataforma</p>
+                  <p className="text-xs text-slate-500 mt-1">Ideal para probar e impulsar tus ventas</p>
                 </div>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-black text-slate-900">S/ 29</span>
+                  <span className="text-4xl font-black text-slate-900">S/ 30</span>
                   <span className="text-xs font-bold text-slate-500">/ mes</span>
                 </div>
                 <ul className="space-y-3 text-sm text-slate-600">
                   <li className="flex items-center gap-2.5">
                     <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span>Hasta 15 productos activos</span>
+                    <span>Catálogo e-commerce con carrito interactivo</span>
+                  </li>
+                  <li className="flex items-center gap-2.5">
+                    <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>Hasta 20 productos activos</span>
                   </li>
                   <li className="flex items-center gap-2.5">
                     <Check className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -467,34 +471,42 @@ export default function HomePage() {
                   </li>
                 </ul>
               </div>
-              <Link
-                href="/login"
-                className="mt-8 w-full py-3.5 px-4 rounded-xl text-center text-sm font-bold text-slate-800 bg-slate-100 hover:bg-slate-200 transition"
+              <a
+                href={PLAN_MENSUAL_WA_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-8 w-full py-3.5 px-4 rounded-xl text-center text-sm font-bold text-slate-800 bg-slate-100 hover:bg-slate-200 transition inline-flex items-center justify-center gap-2"
               >
-                Elegir Plan Mensual
-              </Link>
+                <MessageCircle className="w-4 h-4 text-emerald-600" />
+                <span>Elegir Plan Mensual</span>
+              </a>
             </div>
 
-            {/* PLAN 2: 2 MESES / CAMPAÑA (DESTACADO) */}
+            {/* b) PLAN TRIMESTRAL (MÁS POPULAR / RECOMENDADO) */}
             <div className="relative bg-gradient-to-b from-slate-900 to-slate-950 text-white rounded-3xl p-8 shadow-2xl border-2 border-red-500 flex flex-col justify-between lg:-translate-y-2">
               <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-red-600 to-rose-600 text-white text-[11px] font-black uppercase px-4 py-1.5 rounded-full shadow-md tracking-wider flex items-center gap-1.5">
                 <Flame className="w-3.5 h-3.5" />
-                <span>MÁS POPULAR</span>
+                <span>MÁS POPULAR / RECOMENDADO</span>
               </div>
 
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-xl font-black text-white">Plan 2 Meses / Campaña</h3>
-                  <p className="text-xs text-slate-400 mt-1">El favorito para fechas clave y ferias</p>
+                  <h3 className="text-xl font-black text-white">Plan Trimestral</h3>
+                  <p className="text-xs text-slate-400 mt-1">La mejor relación valor / precio</p>
                 </div>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-5xl font-black text-white">S/ 49</span>
-                  <span className="text-xs font-bold text-slate-400">pago único</span>
+                <div>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-5xl font-black text-white">S/ 70</span>
+                    <span className="text-xs font-bold text-slate-400">por 3 meses</span>
+                  </div>
+                  <span className="inline-block mt-1 text-[11px] font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-800/80 px-2.5 py-0.5 rounded-full">
+                    Ahorro de S/ 20
+                  </span>
                 </div>
                 <ul className="space-y-3 text-sm text-slate-300">
                   <li className="flex items-center gap-2.5">
                     <Check className="w-4 h-4 text-red-400 shrink-0" />
-                    <span className="font-semibold text-white">Hasta 30 productos activos</span>
+                    <span className="font-semibold text-white">Hasta 45 productos activos</span>
                   </li>
                   <li className="flex items-center gap-2.5">
                     <Check className="w-4 h-4 text-red-400 shrink-0" />
@@ -502,24 +514,31 @@ export default function HomePage() {
                   </li>
                   <li className="flex items-center gap-2.5">
                     <Check className="w-4 h-4 text-red-400 shrink-0" />
-                    <span>Ayuda en configuración inicial</span>
+                    <span>Ayuda en la configuración inicial</span>
                   </li>
                   <li className="flex items-center gap-2.5">
                     <Check className="w-4 h-4 text-red-400 shrink-0" />
-                    <span>Pedidos ilimitados sin comisión</span>
+                    <span>Pedidos ilimitados sin comisiones</span>
+                  </li>
+                  <li className="flex items-center gap-2.5">
+                    <Check className="w-4 h-4 text-red-400 shrink-0" />
+                    <span>Soporte prioritario por WhatsApp</span>
                   </li>
                 </ul>
               </div>
 
-              <Link
-                href="/login"
-                className="mt-8 w-full py-4 px-4 rounded-xl text-center text-sm font-black text-white bg-red-600 hover:bg-red-700 shadow-lg shadow-red-600/30 transition"
+              <a
+                href={PLAN_TRIMESTRAL_WA_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-8 w-full py-4 px-4 rounded-xl text-center text-sm font-black text-white bg-red-600 hover:bg-red-700 shadow-lg shadow-red-600/30 transition inline-flex items-center justify-center gap-2"
               >
-                Elegir Plan Popular
-              </Link>
+                <MessageCircle className="w-4 h-4 fill-current" />
+                <span>Elegir Plan Trimestral</span>
+              </a>
             </div>
 
-            {/* PLAN 3: ANUAL */}
+            {/* c) PLAN ANUAL (MÁXIMO AHORRO) */}
             <div className="relative bg-white rounded-3xl p-8 border border-slate-200 shadow-sm flex flex-col justify-between hover:border-slate-300 transition">
               <div className="absolute -top-3.5 right-6 bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase px-3 py-1 rounded-full border border-emerald-200 tracking-wider">
                 MÁXIMO AHORRO
@@ -528,11 +547,11 @@ export default function HomePage() {
               <div className="space-y-6">
                 <div>
                   <h3 className="text-xl font-black text-slate-900">Plan Anual</h3>
-                  <p className="text-xs text-slate-500 mt-1">Para negocios consolidados que venden todo el año</p>
+                  <p className="text-xs text-slate-500 mt-1">Para negocios consolidados todo el año</p>
                 </div>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-black text-slate-900">S/ 199</span>
-                  <span className="text-xs font-bold text-slate-500">/ año</span>
+                  <span className="text-4xl font-black text-slate-900">S/ 200</span>
+                  <span className="text-xs font-bold text-slate-500">por 1 año</span>
                 </div>
                 <ul className="space-y-3 text-sm text-slate-600">
                   <li className="flex items-center gap-2.5">
@@ -545,21 +564,28 @@ export default function HomePage() {
                   </li>
                   <li className="flex items-center gap-2.5">
                     <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>Galería con múltiples fotos por producto</span>
+                  </li>
+                  <li className="flex items-center gap-2.5">
+                    <Check className="w-4 h-4 text-emerald-600 shrink-0" />
                     <span>Soporte prioritario 24/7</span>
                   </li>
                   <li className="flex items-center gap-2.5">
                     <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span>Galería con múltiples fotos</span>
+                    <span>Mayor rentabilidad y presencia garantizada</span>
                   </li>
                 </ul>
               </div>
 
-              <Link
-                href="/login"
-                className="mt-8 w-full py-3.5 px-4 rounded-xl text-center text-sm font-bold text-slate-800 bg-slate-100 hover:bg-slate-200 transition"
+              <a
+                href={PLAN_ANUAL_WA_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-8 w-full py-3.5 px-4 rounded-xl text-center text-sm font-bold text-slate-800 bg-slate-100 hover:bg-slate-200 transition inline-flex items-center justify-center gap-2"
               >
-                Elegir Plan Anual
-              </Link>
+                <MessageCircle className="w-4 h-4 text-emerald-600" />
+                <span>Elegir Plan Anual</span>
+              </a>
             </div>
           </div>
         </div>
@@ -608,23 +634,25 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ─── 7. CTA BANNER PRE-FOOTER ─────────────────────────────────────── */}
+      {/* ─── 7. CTA BANNER PRE-FOOTER (CANALIZADO A WHATSAPP) ──────────────── */}
       <section className="bg-gradient-to-r from-red-600 to-rose-600 text-white py-16">
         <div className="max-w-4xl mx-auto px-4 text-center space-y-6">
           <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
-            ¿Listo para llevar tu negocio al siguiente nivel?
+            ¿Listo para tener tu Tienda Virtual profesional?
           </h2>
           <p className="text-red-100 text-base max-w-xl mx-auto">
-            Únete a cientos de emprendedores peruanos que ya ahorran horas organizando pedidos por WhatsApp.
+            Escríbenos directamente a WhatsApp y te ayudamos a configurar tu e-commerce en minutos.
           </p>
           <div className="pt-2">
-            <Link
-              href="/admin"
-              className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl bg-white text-red-600 font-black text-base shadow-xl hover:bg-slate-50 transition transform hover:-translate-y-0.5 active:scale-95"
+            <a
+              href={HERO_WA_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2.5 px-9 py-4 rounded-2xl bg-white text-red-600 font-black text-base shadow-xl hover:bg-slate-50 transition transform hover:-translate-y-0.5 active:scale-95"
             >
-              <span>Comenzar Ahora Mismo</span>
-              <ArrowRight className="w-5 h-5" />
-            </Link>
+              <MessageCircle className="w-5 h-5 fill-current" />
+              <span>Solicitar mi Tienda Virtual</span>
+            </a>
           </div>
         </div>
       </section>
@@ -644,9 +672,9 @@ export default function HomePage() {
           </p>
 
           <div className="flex items-center gap-4 text-xs font-semibold">
-            <Link href="/detallitos-gourmet" className="hover:text-white transition">
-              Ver Demo
-            </Link>
+            <a href={HERO_WA_URL} target="_blank" rel="noreferrer" className="hover:text-white transition">
+              Contacto por WhatsApp
+            </a>
             <Link href="/login" className="hover:text-white transition">
               Acceso Clientes
             </Link>
